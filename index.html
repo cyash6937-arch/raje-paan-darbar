@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Raje Paan Darbar — Order Counter & Admin Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rozha+One&family=Poppins:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBF3E3;
+    --paper-dark:#F3E7CC;
+    --card:#FFFDF8;
+    --ink:#2B2620;
+    --ink-soft:#7A6C58;
+    --leaf:#1B4332;
+    --leaf-light:#2F6B4F;
+    --leaf-pale:#DCEBE1;
+    --saffron:#E8A33D;
+    --saffron-pale:#FBEBD3;
+    --maroon:#7A1F2B;
+    --maroon-pale:#F3DEE0;
+    --whatsapp:#25D366;
+    --whatsapp-dark:#128C7E;
+    --gold:#C9A227;
+    --grey:#9B8F7C;
+    --grey-pale:#EFEAE0;
+    --shadow: 0 6px 20px rgba(43,38,32,0.12);
+    --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Poppins',sans-serif;-webkit-font-smoothing:antialiased;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .display{font-family:'Rozha One',serif;}
+
+  /* Header */
+  header.shop-header{
+    background:var(--leaf);
+    color:var(--paper);
+    padding:14px 20px;
+    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    position:sticky; top:0; z-index:50;
+    box-shadow:0 4px 14px rgba(0,0,0,0.18);
+  }
+  .brand{display:flex; align-items:center; gap:12px;}
+  .brand h1{font-family:'Rozha One',serif; font-size:22px; margin:0; letter-spacing:0.5px; line-height:1.15;}
+  .brand p{margin:0; font-size:11px; letter-spacing:2px; text-transform:uppercase; opacity:0.75;}
+  .leaf-badge{width:40px;height:40px; flex-shrink:0; object-fit:contain;}
+
+  .header-actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .view-toggle{display:flex; gap:6px; background:rgba(255,255,255,0.12); padding:5px; border-radius:999px;}
+  .view-toggle button{
+    border:none; background:transparent; color:var(--paper); padding:8px 16px; border-radius:999px;
+    font-family:'Poppins',sans-serif; font-weight:600; font-size:13px; cursor:pointer; transition:all 0.2s ease;
+    display:flex; align-items:center; gap:8px;
+  }
+  .view-toggle button.active{background:var(--saffron); color:var(--leaf); box-shadow:0 2px 8px rgba(0,0,0,0.18);}
+  .badge-count{
+    background:var(--maroon); color:#fff; border-radius:999px; font-size:11px; min-width:18px; height:18px;
+    display:inline-flex; align-items:center; justify-content:center; padding:0 6px; font-family:'IBM Plex Mono',monospace; font-weight:700;
+  }
+  .sound-toggle-btn{
+    background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.25); color:#fff; padding:7px 12px;
+    border-radius:999px; font-size:12px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:5px;
+  }
+
+  main{max-width:1050px; margin:0 auto; padding:20px 16px 80px;}
+  .hint-bar{
+    font-size:12.5px; color:var(--ink-soft); text-align:center; margin-bottom:18px; line-height:1.5;
+  }
+
+  /* Customer View */
+  .menu-intro{text-align:center; margin-bottom:20px;}
+  .menu-intro h2{font-family:'Rozha One',serif; font-size:28px; color:var(--leaf); margin:0 0 4px;}
+  .menu-intro p{color:var(--ink-soft); margin:0; font-size:13.5px;}
+
+  .cat-nav{display:flex; flex-direction:column; gap:8px; padding:4px 2px 16px; margin-bottom:8px;}
+  .cat-nav button{
+    background:var(--card); border:1.5px solid var(--grey-pale); color:var(--ink-soft);
+    padding:10px 16px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; text-align:left;
+    transition:background 0.15s, border-color 0.15s;
+  }
+  .cat-nav button:hover{background:var(--leaf-pale); border-color:var(--leaf-light); color:var(--leaf);}
+  .cat-nav button.tobacco-pill{border-color:var(--maroon); color:var(--maroon);}
+  .cat-nav button.tobacco-pill:hover{background:var(--maroon-pale);}
+
+  .category-block{margin-bottom:14px; scroll-margin-top:140px; display:none;}
+  .category-block.open{display:block;}
+  .cat-ribbon{
+    display:inline-flex; align-items:center; gap:8px; background:var(--maroon); color:#fff;
+    padding:8px 18px 8px 14px; border-radius:0 999px 999px 0; font-weight:700; font-size:13px;
+    text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px; box-shadow:var(--shadow);
+  }
+  .cat-ribbon .leaf-mini{font-size:14px;}
+  .cat-ribbon .age-tag{
+    background:#fff; color:var(--maroon); font-size:10px; padding:2px 8px; border-radius:999px; font-weight:800; margin-left:4px;
+  }
+
+  .menu-list{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;}
+  .menu-row{display:flex; flex-direction:column; border-bottom:1px solid var(--grey-pale); cursor:pointer;}
+  .menu-row:last-child{border-bottom:none;}
+  .row-main{display:flex; align-items:center; justify-content:space-between; gap:14px; padding:13px 18px; transition:background 0.15s;}
+  .row-main:hover{background:var(--leaf-pale);}
+  .row-more{display:none; padding:0 18px 14px 30px; font-size:12.5px; color:var(--ink-soft); line-height:1.6;}
+  .menu-row.expanded .row-more{display:block;}
+  .menu-row.expanded .row-main{background:var(--leaf-pale);}
+  .chev{font-size:11px; color:var(--grey); margin-left:6px; transition:transform 0.2s; display:inline-block;}
+  .menu-row.expanded .chev{transform:rotate(180deg);}
+  .row-name{font-size:14.5px; font-weight:500; color:var(--ink);}
+  .row-name .leaf-tick{color:var(--leaf-light); margin-right:6px; font-size:12px;}
+  .row-right{display:flex; align-items:center; gap:10px; flex-shrink:0;}
+  .row-price{font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:14px; color:var(--leaf); white-space:nowrap;}
+  .row-order-btn{
+    background:var(--saffron); color:var(--leaf); border:none; padding:7px 15px; border-radius:999px;
+    font-weight:700; font-size:12px; cursor:pointer; white-space:nowrap; transition:background 0.15s, transform 0.1s;
+  }
+  .row-order-btn:hover{background:var(--gold); transform:scale(1.03);}
+
+  /* Customer Active Status Bar */
+  .customer-status-bar{
+    background:var(--card); border-radius:var(--radius); padding:16px 20px; margin-bottom:20px;
+    box-shadow:var(--shadow); border:1.5px solid var(--leaf-pale);
+  }
+  .status-bar-header{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
+  .status-bar-header h4{margin:0; font-size:14px; color:var(--leaf); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;}
+  .status-tokens-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:12px;}
+  .cust-token-card{
+    background:var(--paper); border-radius:12px; padding:14px; border-left:5px solid var(--grey);
+    box-shadow:0 3px 10px rgba(0,0,0,0.06); display:flex; flex-direction:column; gap:6px;
+  }
+  .cust-token-card.pending{border-left-color:var(--saffron);}
+  .cust-token-card.ready{border-left-color:var(--leaf); background:var(--leaf-pale); animation:pulseGreen 2s infinite;}
+  .cust-token-card.not_picked{border-left-color:var(--maroon); background:var(--maroon-pale);}
+  @keyframes pulseGreen{0%,100%{box-shadow:0 0 0 0 rgba(47,107,79,0.25);}50%{box-shadow:0 0 0 6px rgba(47,107,79,0);}}
+  .cust-token-top{display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:700;}
+  .token-badge-large{
+    background:var(--leaf); color:#fff; padding:3px 10px; border-radius:6px; font-family:'IBM Plex Mono',monospace; font-size:13px;
+  }
+  .cust-token-status{padding:3px 8px; border-radius:999px; font-size:11px; font-weight:700; text-transform:uppercase;}
+  .status-tag-pending{background:var(--saffron-pale); color:#855800;}
+  .status-tag-ready{background:var(--leaf); color:#fff;}
+  .status-tag-not_picked{background:var(--maroon); color:#fff;}
+  .status-tag-picked{background:var(--grey-pale); color:var(--ink-soft);}
+
+  /* Modals */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(27,67,50,0.55); display:flex; align-items:center; justify-content:center;
+    z-index:100; padding:16px; backdrop-filter:blur(2px);
+  }
+  .modal{
+    background:var(--paper); border-radius:16px; padding:26px; max-width:420px; width:100%; box-shadow:0 20px 50px rgba(0,0,0,0.3);
+    position:relative; max-height:88vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  }
+  .modal h3{font-family:'Rozha One',serif; color:var(--leaf); font-size:22px; margin:0 0 2px;}
+  .modal .item-sub{color:var(--ink-soft); font-size:13px; margin:0 0 16px;}
+  .modal label{display:block; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--ink-soft); margin:14px 0 6px;}
+  .modal input{
+    width:100%; padding:11px 12px; border-radius:8px; border:1.5px solid var(--grey-pale); font-size:14px; font-family:'Poppins',sans-serif;
+    background:#fff;
+  }
+  .modal input:focus{outline:none; border-color:var(--saffron);}
+
+  .size-row{display:flex; flex-direction:column; gap:8px;}
+  .size-chip{
+    border:2px solid var(--grey-pale); background:#fff; color:var(--ink-soft); padding:9px 16px; border-radius:10px;
+    font-size:13px; font-weight:600; cursor:pointer; display:flex; justify-content:space-between; align-items:center;
+  }
+  .size-chip .sp{font-family:'IBM Plex Mono',monospace; margin-left:6px;}
+  .size-chip.on{background:var(--leaf); border-color:var(--leaf); color:#fff;}
+
+  .qty-row{display:flex; align-items:center; gap:12px;}
+  .qty-row button{
+    width:32px; height:32px; border-radius:50%; border:1.5px solid var(--leaf); background:#fff; color:var(--leaf);
+    font-size:16px; font-weight:700; cursor:pointer;
+  }
+  .qty-row span{font-family:'IBM Plex Mono',monospace; font-size:16px; min-width:24px; text-align:center;}
+
+  .modal-total{
+    margin-top:16px; padding:12px 14px; background:var(--leaf-pale); border-radius:10px; display:flex; justify-content:space-between; align-items:center;
+    font-size:14px;
+  }
+  .modal-total b{font-family:'IBM Plex Mono',monospace; font-size:18px; color:var(--leaf);}
+  .modal-actions{display:flex; gap:10px; margin-top:20px;}
+  .btn-primary{
+    flex:1; background:var(--leaf); color:#fff; border:none; padding:12px; border-radius:999px; font-weight:700; font-size:14px; cursor:pointer;
+  }
+  .btn-primary:disabled{opacity:0.4; cursor:not-allowed;}
+  .btn-ghost{
+    background:transparent; border:1.5px solid var(--grey-pale); color:var(--ink-soft); padding:12px 16px; border-radius:999px; font-weight:600; cursor:pointer; font-size:14px;
+  }
+  .field-error{color:var(--maroon); font-size:11.5px; margin-top:4px; min-height:14px;}
+
+  /* Age Modal */
+  .age-modal .modal{max-width:340px; text-align:center;}
+  .age-modal h3{font-family:'Rozha One',serif; color:var(--maroon); font-size:20px; margin:0 0 10px;}
+  .age-modal p{font-size:13.5px; color:var(--ink-soft); line-height:1.6; margin:0 0 20px;}
+  .age-actions{display:flex; gap:10px;}
+  .age-actions button{flex:1; padding:11px; border-radius:999px; font-weight:700; font-size:13.5px; cursor:pointer; border:none;}
+  .age-yes{background:var(--maroon); color:#fff;}
+  .age-no{background:var(--grey-pale); color:var(--ink-soft);}
+
+  /* Admin View */
+  .admin-topbar{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:18px;}
+  .admin-topbar h2{font-family:'Rozha One',serif; color:var(--leaf); font-size:26px; margin:0;}
+  .settings-panel{
+    display:flex; gap:14px; align-items:center; background:var(--card); border-radius:12px; padding:10px 14px; box-shadow:var(--shadow); flex-wrap:wrap;
+  }
+  .settings-panel label{font-size:11px; color:var(--ink-soft); font-weight:600; display:flex; align-items:center; gap:6px;}
+  .settings-panel input{
+    width:56px; padding:6px 8px; border-radius:6px; border:1.5px solid var(--grey-pale); font-family:'IBM Plex Mono',monospace; font-size:13px;
+  }
+
+  .reminder-banner{
+    background:var(--saffron-pale); border:1.5px solid var(--saffron); color:#6b4a10; padding:12px 16px; border-radius:12px;
+    margin-bottom:16px; font-size:13.5px; display:flex; align-items:center; gap:10px;
+  }
+  .alert-banner{
+    background:var(--maroon-pale); border:1.5px solid var(--maroon); color:var(--maroon); padding:12px 16px; border-radius:12px;
+    margin-bottom:16px; font-size:13.5px; display:flex; align-items:center; gap:10px; font-weight:600;
+  }
+
+  .kanban{display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;}
+  @media (max-width:820px){.kanban{grid-template-columns:1fr;}}
+  .column{background:var(--paper-dark); border-radius:14px; padding:14px; min-height:140px;}
+  .column-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding:0 4px;}
+  .column-head h4{margin:0; font-size:13px; text-transform:uppercase; letter-spacing:1px; font-weight:700;}
+  .col-pending h4{color:var(--saffron);}
+  .col-ready h4{color:var(--leaf-light);}
+  .col-notpicked h4{color:var(--maroon);}
+
+  .ticket{
+    background:var(--card); border-radius:12px; padding:14px; margin-bottom:12px; box-shadow:var(--shadow);
+    border-left:5px solid var(--grey); position:relative;
+  }
+  .ticket.pending{border-left-color:var(--saffron);}
+  .ticket.ready{border-left-color:var(--leaf-light);}
+  .ticket.not_picked{border-left-color:var(--maroon); animation:pulse 1.6s infinite;}
+  @keyframes pulse{0%,100%{box-shadow:var(--shadow);}50%{box-shadow:0 0 0 4px rgba(122,31,43,0.18);}}
+
+  .ticket-top{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+  .ticket-token-number{
+    background:var(--leaf); color:#fff; padding:4px 8px; border-radius:6px; font-family:'IBM Plex Mono',monospace;
+    font-weight:700; font-size:14px; display:inline-block;
+  }
+  .ticket-item{font-weight:700; font-size:14.5px; margin-top:4px;}
+  .ticket-qty{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-soft);}
+  .ticket-customer{margin-top:8px; font-size:13px; display:flex; justify-content:space-between; align-items:center;}
+  .ticket-customer .name{font-weight:600;}
+  .ticket-customer .phone-link{
+    color:var(--leaf); font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:700; text-decoration:none;
+    background:var(--leaf-pale); padding:3px 8px; border-radius:6px;
+  }
+  .ticket-meta{display:flex; justify-content:space-between; align-items:center; margin-top:10px; font-size:11.5px; color:var(--ink-soft);}
+  .elapsed{font-family:'IBM Plex Mono',monospace;}
+
+  .ticket-actions{display:flex; flex-direction:column; gap:6px; margin-top:12px;}
+  .action-row{display:flex; gap:6px;}
+  .action-row button, .action-row a{
+    flex:1; border:none; padding:8px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; text-align:center;
+    text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:4px;
+  }
+  .btn-mark-ready{background:var(--leaf); color:#fff; width:100%;}
+  .btn-mark-picked{background:var(--leaf-pale); color:var(--leaf); width:100%; border:1px solid var(--leaf-light);}
+  .btn-whatsapp{background:var(--whatsapp); color:#fff;}
+  .btn-sms{background:#2E5C88; color:#fff;}
+  .btn-call{background:var(--maroon); color:#fff;}
+  .empty-col{color:var(--grey); font-size:12.5px; text-align:center; padding:20px 8px;}
+
+  .sms-log-section, .completed-section{margin-top:26px;}
+  .sms-log-section h4, .completed-section h4{
+    font-size:13px; text-transform:uppercase; letter-spacing:1px; color:var(--ink-soft); margin:0 0 10px;
+  }
+  .sms-log{background:var(--card); border-radius:12px; padding:6px 14px; box-shadow:var(--shadow); max-height:180px; overflow-y:auto;}
+  .sms-row{padding:9px 0; border-bottom:1px solid var(--grey-pale); font-size:12.5px; display:flex; gap:8px; align-items:flex-start;}
+  .sms-row:last-child{border-bottom:none;}
+  .sms-row .time{font-family:'IBM Plex Mono',monospace; color:var(--grey); flex-shrink:0;}
+  .completed-list{display:flex; flex-wrap:wrap; gap:8px;}
+  .completed-chip{
+    background:var(--grey-pale); color:var(--ink-soft); font-size:11.5px; padding:6px 12px; border-radius:999px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+
+  .note{font-size:11.5px; color:var(--grey); text-align:center; margin-top:30px; line-height:1.6; padding:0 10px;}
+
+  /* Toasts */
+  .toast-stack{position:fixed; top:80px; right:16px; z-index:200; display:flex; flex-direction:column; gap:10px; max-width:340px; pointer-events:none;}
+  .toast{
+    background:var(--leaf); color:#fff; padding:12px 16px; border-radius:10px; font-size:13px; box-shadow:0 10px 24px rgba(0,0,0,0.25);
+    animation:slidein 0.25s ease; pointer-events:auto;
+  }
+  .toast.sms{background:#2E5C88;}
+  .toast.whatsapp{background:var(--whatsapp-dark);}
+  .toast.alert{background:var(--maroon);}
+  .toast.order{background:var(--leaf-light);}
+  .toast b{display:block; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; opacity:0.9; margin-bottom:2px;}
+  @keyframes slidein{from{transform:translateX(30px); opacity:0;} to{transform:translateX(0); opacity:1;}}
+
+  /* Splash */
+  .splash-screen{
+    position:fixed; inset:0; overflow:hidden;
+    background:
+      radial-gradient(ellipse 900px 700px at 50% 38%, rgba(232,163,61,0.16), transparent 60%),
+      linear-gradient(160deg, #0B2A1C 0%, #143B29 42%, #1B4332 68%, #2F6B4F 100%);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    z-index:500; cursor:pointer; transition:opacity 0.6s ease, visibility 0.6s;
+  }
+  .splash-screen.hidden{opacity:0; visibility:hidden; pointer-events:none;}
+  .splash-vignette{position:absolute; inset:0; box-shadow:inset 0 0 180px 60px rgba(0,0,0,0.45); pointer-events:none;}
+  .splash-content{position:relative; display:flex; flex-direction:column; align-items:center; gap:16px; padding:0 20px; text-align:center;}
+  .splash-title{font-family:'Rozha One',serif; color:#F8E9C7; font-size:clamp(22px,5vw,32px); letter-spacing:1px; margin:6px 0 0;}
+  .splash-subtitle{font-family:'Poppins',sans-serif; color:rgba(248,233,199,0.75); font-size:12px; letter-spacing:3px; text-transform:uppercase;}
+  .splash-cta{
+    border:1.5px solid rgba(244,210,140,0.7); color:#F8E9C7; background:rgba(244,210,140,0.06);
+    padding:13px 30px; border-radius:999px; font-family:'Poppins',sans-serif; font-weight:600; font-size:13px;
+    letter-spacing:2px; text-transform:uppercase;
+  }
+  body.locked{overflow:hidden;}
+</style>
+</head>
+<body class="locked">
+
+<!-- Splash Screen -->
+<div class="splash-screen" id="splashScreen" onclick="enterSite()">
+  <div class="splash-vignette"></div>
+  <div class="splash-content">
+    <h2 class="splash-title">Raje Paan Darbar</h2>
+    <p class="splash-subtitle">Family Paan Point</p>
+    <span class="splash-cta">Enter Order Counter →</span>
+  </div>
+</div>
+
+<!-- Header -->
+<header class="shop-header">
+  <div class="brand">
+    <div>
+      <h1>🍃 Raje Paan Darbar</h1>
+      <p>Order Counter &amp; Live Kitchen Desk</p>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button type="button" class="sound-toggle-btn" id="btnSoundToggle" onclick="toggleSound()">
+      <span id="soundIcon">🔔</span> <span id="soundText">Sound ON</span>
+    </button>
+    <div class="view-toggle">
+      <button type="button" class="active" id="btnCustomerView" onclick="switchView('customer')">
+        <span>🍃 Menu</span>
+      </button>
+      <button type="button" id="btnAdminView" onclick="switchView('admin')">
+        <span>🧾 Admin Desk</span>
+        <span class="badge-count" id="adminActiveBadge" style="display:none;">0</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- CUSTOMER VIEW -->
+  <section id="customerView">
+    <p class="hint-bar">Enter your name and mobile number. When your paan is ready, you'll receive your Token notification!</p>
+    
+    <!-- Customer Active Orders Status Bar -->
+    <div class="customer-status-bar" id="custStatusBar" style="display:none;">
+      <div class="status-bar-header">
+        <h4>🍃 Your Active Order Tokens</h4>
+        <span class="mono" id="custOrderCount" style="font-size:12px; color:var(--ink-soft);"></span>
+      </div>
+      <div class="status-tokens-grid" id="custTokensGrid"></div>
+    </div>
+
+    <div class="menu-intro">
+      <h2>Today's Fresh Paan Menu</h2>
+      <p>Select your favorite paan or explore our signature creations below.</p>
+    </div>
+    
+    <div class="cat-nav" id="catNav"></div>
+    <div id="menuCategories"></div>
+  </section>
+
+  <!-- ADMIN VIEW -->
+  <section id="adminView" style="display:none;">
+    <div class="admin-topbar">
+      <h2>Live Order Desk</h2>
+      <div class="settings-panel">
+        <label>⏰ Pending reminder (min)
+          <input type="number" min="0.5" step="0.5" id="pendingThreshold" value="15" onchange="updateSettings()">
+        </label>
+        <label>📦 Not-picked alert (min)
+          <input type="number" min="1" step="1" id="notPickedThreshold" value="60" onchange="updateSettings()">
+        </label>
+      </div>
+    </div>
+
+    <div id="bannerArea"></div>
+
+    <div class="kanban">
+      <div class="column col-pending">
+        <div class="column-head">
+          <h4>Pending Preparation</h4>
+          <span class="badge-count" style="background:var(--saffron); color:var(--leaf);" id="countPending">0</span>
+        </div>
+        <div id="colPending"></div>
+      </div>
+      <div class="column col-ready">
+        <div class="column-head">
+          <h4>Ready for Pickup</h4>
+          <span class="badge-count" style="background:var(--leaf-light);" id="countReady">0</span>
+        </div>
+        <div id="colReady"></div>
+      </div>
+      <div class="column col-notpicked">
+        <div class="column-head">
+          <h4>Overdue / Not Picked</h4>
+          <span class="badge-count" style="background:var(--maroon);" id="countNotPicked">0</span>
+        </div>
+        <div id="colNotPicked"></div>
+      </div>
+    </div>
+
+    <div class="sms-log-section">
+      <h4>📱 Notification &amp; SMS History</h4>
+      <div class="sms-log" id="smsLog">
+        <div class="empty-col">No messages sent yet.</div>
+      </div>
+    </div>
+
+    <div class="completed-section">
+      <h4>✅ Picked Up Today</h4>
+      <div class="completed-list" id="completedList">
+        <span class="empty-col">Nothing completed yet.</span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<script>
+/* ----------------------------------------------------
+   DATA & CATEGORIES
+---------------------------------------------------- */
+function twoPrices(a,b){ return [{label:'Half', price:a}, {label:'Full', price:b}]; }
+function onePrice(a){ return [{label:'', price:a}]; }
+
+const CATEGORIES = [
+  {
+    key:'special', title:'Raje Paan Darbar Special', tobacco:false,
+    items:[
+      {id:'sp-rampyare', name:'Special Rampyare Paan', prices:onePrice(30)},
+      {id:'sp-dryfruit', name:'Dry Fruit Paan', prices:onePrice(40)},
+      {id:'sp-masala', name:'Masala Paan', prices:onePrice(20)},
+      {id:'sp-banarasimasala', name:'Banarasi Masala Paan', prices:onePrice(20)},
+      {id:'sp-chamanchutney', name:'Chaman Chutney Paan', prices:twoPrices(20,25)},
+      {id:'sp-khushboo', name:'Khushboo Paan', prices:twoPrices(20,25)},
+      {id:'sp-kashmiribadishop', name:'Kashmiri Badishop Paan', prices:twoPrices(20,25)},
+      {id:'sp-gulkand', name:'Gulkand Paan', prices:onePrice(20)},
+      {id:'sp-kesar', name:'Kesar Paan', prices:onePrice(60)},
+      {id:'sp-shilajit', name:'Shilajit Paan', prices:onePrice(40)},
+      {id:'sp-fire', name:'Fire Paan', prices:onePrice(40)},
+      {id:'sp-ayurvedic', name:'Ayurvedic Paan', prices:onePrice(20)},
+      {id:'sp-sardikhasi', name:'Sardi-Khasi Special Paan', prices:onePrice(20)},
+      {id:'sp-sugarfree', name:'Sugar Free Paan', prices:onePrice(20)},
+      {id:'sp-kolkatasada', name:'Kolkata Sada Paan', prices:twoPrices(15,20)}
+    ]
+  },
+  {
+    key:'tobacco', title:'Tobacco Paan', tobacco:true,
+    items:[
+      {id:'tb-phoolchand', name:'Phoolchand Paan', prices:twoPrices(30,35)},
+      {id:'tb-rimzim', name:'Rimzim Paan', prices:twoPrices(35,40)},
+      {id:'tb-kolkata120300', name:'Kolkata 120-300 Paan', prices:twoPrices(25,30)},
+      {id:'tb-kolkata360', name:'Kolkata 360 Paan', prices:twoPrices(25,30)},
+      {id:'tb-banaras120300', name:'Banaras 120-300 Paan', prices:twoPrices(25,30)},
+      {id:'tb-banaras360', name:'Banaras 360 Paan', prices:twoPrices(25,30)},
+      {id:'tb-khimam', name:'Khimam Paan', prices:twoPrices(30,35)},
+      {id:'tb-powder', name:'Powder Paan', prices:twoPrices(30,35)}
+    ]
+  },
+  {
+    key:'flavour', title:'Flavour Paan', tobacco:false,
+    items:[
+      {id:'fl-chocolate', name:'Chocolate Paan', prices:onePrice(30)},
+      {id:'fl-malaikulfi', name:'Malai Kulfi Paan', prices:onePrice(30)},
+      {id:'fl-mango', name:'Mango Paan', prices:onePrice(30)},
+      {id:'fl-belgiumchoc', name:'Belgium Chocolate Paan', prices:onePrice(30)},
+      {id:'fl-roastedcoffee', name:'Roasted Coffee Paan', prices:onePrice(30)},
+      {id:'fl-pista', name:'Pista Paan', prices:onePrice(30)},
+      {id:'fl-strawberry', name:'Strawberry Paan', prices:onePrice(30)},
+      {id:'fl-coconut', name:'Coconut Paan', prices:onePrice(30)},
+      {id:'fl-mixfruit', name:'Mix Fruit Paan', prices:onePrice(30)},
+      {id:'fl-mulberry', name:'Mulberry Paan', prices:onePrice(30)},
+      {id:'fl-vanilla', name:'Vanilla Paan', prices:onePrice(30)},
+      {id:'fl-pineapple', name:'Pineapple Paan', prices:onePrice(30)},
+      {id:'fl-butterscotch', name:'Butterscotch Paan', prices:onePrice(30)},
+      {id:'fl-chocvanilla', name:'Chocolate Vanilla Twist', prices:onePrice(30)}
+    ]
+  },
+  {
+    key:'shots', title:'Paan Shots', tobacco:false,
+    items:[
+      {id:'sh-paanshots', name:'Paan Shots', prices:onePrice(20)},
+      {id:'sh-masalapaanshots', name:'Masala Paan Shots', prices:onePrice(30)}
+    ]
+  },
+  {
+    key:'super', title:'Super Paan', tobacco:false,
+    items:[
+      {id:'su-couple', name:'Special Couple Paan', prices:onePrice(500)}
+    ]
+  },
+  {
+    key:'ladu', title:'Ladu Paan', tobacco:false,
+    items:[
+      {id:'la-ladu', name:'Ladu Paan', prices:onePrice(20)},
+      {id:'la-chocladu', name:'Chocolate Ladu Paan', prices:onePrice(30)}
+    ]
+  },
+  {
+    key:'maghai', title:'Maghai Paan', tobacco:false,
+    items:[
+      {id:'ma-maghai', name:'Maghai Paan', prices:onePrice(20)},
+      {id:'ma-maghaichoc', name:'Maghai Chocolate Paan', prices:onePrice(30)},
+      {id:'ma-maghaichocvanilla', name:'Maghai Chocolate Vanilla Twist', prices:onePrice(40)}
+    ]
+  }
+];
+
+const ITEM_INDEX = {};
+CATEGORIES.forEach(cat => cat.items.forEach(it => { 
+  ITEM_INDEX[it.id] = {...it, categoryKey:cat.key, categoryTitle:cat.title, tobacco:cat.tobacco}; 
+}));
+
+/* ----------------------------------------------------
+   STORAGE & STATE
+---------------------------------------------------- */
+const ORDER_STORAGE_KEY = 'raje_paan_orders';
+const SETTINGS_STORAGE_KEY = 'raje_paan_settings';
+const SMS_STORAGE_KEY = 'raje_paan_sms_log';
+const MY_TOKENS_KEY = 'raje_paan_my_tokens';
+const TOKEN_COUNTER_KEY = 'raje_paan_token_seq';
+
+const orderChannel = 'BroadcastChannel' in window ? new BroadcastChannel('raje_paan_orders_channel') : null;
+
+let currentView = 'customer';
+let orders = [];
+let settings = {pendingReminderMin: 15, notPickedAlertMin: 60};
+let smsLog = [];
+let knownOrderIds = new Set();
+let remindedIds = new Set();
+let notPickedAlertedIds = new Set();
+let myTokenIds = new Set();
+let initialised = false;
+let soundEnabled = true;
+
+/* Web Audio Chime */
+function playBellSound(type = 'order'){
+  if(!soundEnabled) return;
+  try{
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if(!AudioContext) return;
+    const ctx = new AudioContext();
+    const now = ctx.currentTime;
+    
+    if(type === 'order'){
+      // Two-tone bell for new incoming order
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc1.type = 'sine';
+      osc2.type = 'sine';
+      osc1.frequency.setValueAtTime(587.33, now); // D5
+      osc2.frequency.setValueAtTime(880, now + 0.15); // A5
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.15);
+      osc2.start(now + 0.15);
+      osc2.stop(now + 0.8);
+    } else {
+      // Ready chime
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(659.25, now); // E5
+      osc.frequency.setValueAtTime(1046.50, now + 0.12); // C6
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.6);
+    }
+  }catch(e){}
+}
+
+function toggleSound(){
+  soundEnabled = !soundEnabled;
+  document.getElementById('soundIcon').textContent = soundEnabled ? '🔔' : '🔕';
+  document.getElementById('soundText').textContent = soundEnabled ? 'Sound ON' : 'Sound OFF';
+  if(soundEnabled) playBellSound('order');
+}
+
+/* Local storage helpers */
+async function loadOrders(){
+  try{
+    const val = localStorage.getItem(ORDER_STORAGE_KEY);
+    return val ? JSON.parse(val) : [];
+  }catch(e){ return []; }
+}
+async function saveOrders(list){
+  try{
+    localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(list));
+    if(orderChannel) orderChannel.postMessage({type:'orders-updated', count: list.length});
+  }catch(e){}
+}
+async function loadSettings(){
+  try{
+    const val = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    return val ? JSON.parse(val) : {pendingReminderMin:15, notPickedAlertMin:60};
+  }catch(e){ return {pendingReminderMin:15, notPickedAlertMin:60}; }
+}
+async function saveSettings(s){
+  try{ localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(s)); }catch(e){}
+}
+async function loadSmsLog(){
+  try{
+    const val = localStorage.getItem(SMS_STORAGE_KEY);
+    return val ? JSON.parse(val) : [];
+  }catch(e){ return []; }
+}
+async function saveSmsLog(list){
+  try{ localStorage.setItem(SMS_STORAGE_KEY, JSON.stringify(list)); }catch(e){}
+}
+function loadMyTokens(){
+  try{
+    const val = localStorage.getItem(MY_TOKENS_KEY);
+    return val ? new Set(JSON.parse(val)) : new Set();
+  }catch(e){ return new Set(); }
+}
+function saveMyTokens(setObj){
+  try{ localStorage.setItem(MY_TOKENS_KEY, JSON.stringify(Array.from(setObj))); }catch(e){}
+}
+function getNextTokenNumber(){
+  try{
+    let cur = parseInt(localStorage.getItem(TOKEN_COUNTER_KEY) || '100');
+    cur += 1;
+    localStorage.setItem(TOKEN_COUNTER_KEY, cur.toString());
+    return cur;
+  }catch(e){ return Math.floor(100 + Math.random()*900); }
+}
+
+/* View Switcher */
+function switchView(view){
+  currentView = view;
+  const custSec = document.getElementById('customerView');
+  const adminSec = document.getElementById('adminView');
+  const btnCust = document.getElementById('btnCustomerView');
+  const btnAdmin = document.getElementById('btnAdminView');
+
+  if(view === 'customer'){
+    custSec.style.display = 'block';
+    adminSec.style.display = 'none';
+    btnCust.classList.add('active');
+    btnAdmin.classList.remove('active');
+    renderCustomerTokens();
+  } else {
+    custSec.style.display = 'none';
+    adminSec.style.display = 'block';
+    btnAdmin.classList.add('active');
+    btnCust.classList.remove('active');
+    renderAdmin();
+  }
+}
+
+/* ----------------------------------------------------
+   CUSTOMER MENU & ORDERING
+---------------------------------------------------- */
+function priceLabel(prices){
+  if(prices.length === 1) return '₹' + prices[0].price;
+  return prices.map(p => '₹' + p.price).join(' / ');
+}
+
+function renderMenu(){
+  const nav = document.getElementById('catNav');
+  nav.innerHTML = CATEGORIES.map(cat => `
+    <button class="${cat.tobacco ? 'tobacco-pill' : ''}" onclick="scrollToCategory('${cat.key}')">${cat.title}${cat.tobacco ? ' 🔞' : ''}</button>
+  `).join('');
+
+  const wrap = document.getElementById('menuCategories');
+  wrap.innerHTML = CATEGORIES.map(cat => `
+    <div class="category-block" id="cat-${cat.key}">
+      <div class="cat-ribbon"><span class="leaf-mini">🍃</span>${cat.title}${cat.tobacco ? '<span class="age-tag">18+</span>' : ''}</div>
+      <div class="menu-list">
+        ${cat.items.map(item => `
+          <div class="menu-row" id="row-${item.id}">
+            <div class="row-main" onclick="toggleRow('${item.id}')">
+              <span class="row-name"><span class="leaf-tick">🍃</span>${item.name}<span class="chev">▾</span></span>
+              <span class="row-right">
+                <span class="row-price">${item.tobacco ? '₹' + item.prices[0].price : priceLabel(item.prices)}</span>
+                <button class="row-order-btn" onclick="event.stopPropagation(); handleItemClick('${item.id}')">Order</button>
+              </span>
+            </div>
+            <div class="row-more">
+              ${item.tobacco ? `₹${item.prices[0].price} · Choose Soft, Medium or Kadak. 18+ only.` : (item.prices.length > 1 ? `Available in Half (₹${item.prices[0].price}) and Full (₹${item.prices[1].price}).` : `₹${item.prices[0].price} per piece.`)}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function scrollToCategory(key){
+  document.querySelectorAll('.category-block').forEach(el => el.classList.toggle('open', el.id === 'cat-' + key));
+  const el = document.getElementById('cat-' + key);
+  if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function toggleRow(itemId){
+  const row = document.getElementById('row-' + itemId);
+  if(row) row.classList.toggle('expanded');
+}
+
+function handleItemClick(itemId){
+  const item = ITEM_INDEX[itemId];
+  if(item.tobacco) openAgeGate(itemId);
+  else openOrderModal(itemId);
+}
+
+function openAgeGate(itemId){
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay age-modal';
+  overlay.id = 'ageGateOverlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <h3>🔞 Age Confirmation</h3>
+      <p>This item contains tobacco. Sale is strictly restricted to customers aged 18 years or older.</p>
+      <div class="age-actions">
+        <button class="age-no" onclick="closeAgeGate()">Cancel</button>
+        <button class="age-yes" onclick="confirmAgeAndOrder('${itemId}')">I am 18+</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeAgeGate(); });
+}
+function closeAgeGate(){
+  const el = document.getElementById('ageGateOverlay');
+  if(el) el.remove();
+}
+function confirmAgeAndOrder(itemId){
+  closeAgeGate();
+  openOrderModal(itemId);
+}
+
+let modalQty = 1;
+let modalItem = null;
+let modalSizeIndex = 0;
+let modalStrength = 'Medium';
+
+function openOrderModal(itemId){
+  modalItem = ITEM_INDEX[itemId];
+  modalQty = 1;
+  modalSizeIndex = 0;
+  modalStrength = 'Medium';
+
+  const hasSizes = !modalItem.tobacco && modalItem.prices.length > 1;
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'orderModalOverlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <h3>${modalItem.name}</h3>
+      <p class="item-sub">${modalItem.categoryTitle}${modalItem.tobacco ? ' · Contains tobacco (18+)' : ''}</p>
+
+      ${hasSizes ? `
+        <label>Portion Size</label>
+        <div class="size-row" id="sizeRow">
+          ${modalItem.prices.map((p,i) => `
+            <span class="size-chip ${i===0 ? 'on' : ''}" data-i="${i}" onclick="selectSize(${i})">${p.label}<span class="sp">₹${p.price}</span></span>
+          `).join('')}
+        </div>
+      ` : ''}
+
+      ${modalItem.tobacco ? `
+        <label>Tobacco Strength</label>
+        <div class="size-row" id="strengthRow">
+          ${['Soft','Medium','Kadak'].map(s => `
+            <span class="size-chip ${s==='Medium' ? 'on' : ''}" data-s="${s}" onclick="selectStrength('${s}')">${s}</span>
+          `).join('')}
+        </div>
+      ` : ''}
+
+      <label>Customer Name</label>
+      <input type="text" id="custName" placeholder="e.g. Rahul Sharma" maxlength="60">
+      <div class="field-error" id="errName"></div>
+
+      <label>Customer Mobile Number (10 Digits)</label>
+      <input type="tel" id="custPhone" placeholder="e.g. 9876543210" maxlength="10" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10);">
+      <div class="field-error" id="errPhone"></div>
+
+      <label>Quantity</label>
+      <div class="qty-row">
+        <button type="button" onclick="changeQty(-1)">−</button>
+        <span id="qtyDisplay">1</span>
+        <button type="button" onclick="changeQty(1)">+</button>
+      </div>
+
+      <div class="modal-total">
+        <span>Order Total</span>
+        <b id="modalTotal">₹${modalItem.tobacco ? modalItem.prices[0].price : modalItem.prices[0].price}</b>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn-primary" id="submitOrderBtn" onclick="submitOrder()">Place Order &amp; Get Token</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeModal(); });
+}
+
+function selectSize(i){
+  modalSizeIndex = i;
+  document.querySelectorAll('#sizeRow .size-chip').forEach(el => el.classList.toggle('on', parseInt(el.dataset.i)===i));
+  updateTotal();
+}
+function selectStrength(s){
+  modalStrength = s;
+  document.querySelectorAll('#strengthRow .size-chip').forEach(el => el.classList.toggle('on', el.dataset.s===s));
+}
+function changeQty(delta){
+  modalQty = Math.max(1, Math.min(20, modalQty + delta));
+  document.getElementById('qtyDisplay').textContent = modalQty;
+  updateTotal();
+}
+function updateTotal(){
+  const price = modalItem.tobacco ? modalItem.prices[0].price : modalItem.prices[modalSizeIndex].price;
+  document.getElementById('modalTotal').textContent = '₹' + (price * modalQty);
+}
+function closeModal(){
+  const el = document.getElementById('orderModalOverlay');
+  if(el) el.remove();
+}
+
+async function submitOrder(){
+  const nameEl = document.getElementById('custName');
+  const phoneEl = document.getElementById('custPhone');
+  const name = nameEl.value.trim();
+  const phone = phoneEl.value.trim();
+  let ok = true;
+  document.getElementById('errName').textContent = '';
+  document.getElementById('errPhone').textContent = '';
+  if(name.length < 2){ document.getElementById('errName').textContent = 'Please enter your name.'; ok = false; }
+  if(!/^[0-9]{10}$/.test(phone)){ document.getElementById('errPhone').textContent = 'Enter a valid 10-digit mobile number.'; ok = false; }
+  if(!ok) return;
+
+  const btn = document.getElementById('submitOrderBtn');
+  btn.disabled = true; btn.textContent = 'Generating Token...';
+
+  const tokenNumber = getNextTokenNumber();
+  const chosen = modalItem.tobacco ? modalItem.prices[0] : modalItem.prices[modalSizeIndex];
+  const newOrder = {
+    id: 'TOKEN-' + tokenNumber,
+    tokenNumber: tokenNumber,
+    itemId: modalItem.id,
+    itemName: modalItem.name + (modalItem.tobacco ? ' (' + modalStrength + ')' : (chosen.label ? ' (' + chosen.label + ')' : '')),
+    categoryTitle: modalItem.categoryTitle,
+    price: chosen.price,
+    qty: modalQty,
+    customerName: name,
+    phone: phone,
+    status: 'pending',
+    createdAt: Date.now(),
+    readyAt: null,
+    pickedAt: null
+  };
+
+  const current = await loadOrders();
+  current.push(newOrder);
+  await saveOrders(current);
+
+  myTokenIds.add(newOrder.id);
+  saveMyTokens(myTokenIds);
+
+  closeModal();
+  playBellSound('order');
+  showToast('order', 'Order Placed!', `Token #${newOrder.tokenNumber}: ${newOrder.itemName} for ${newOrder.customerName} (${newOrder.phone}).`);
+  
+  orders = current;
+  renderCustomerTokens();
+  updateAdminBadge();
+}
+
+/* ----------------------------------------------------
+   CUSTOMER TOKEN BAR
+---------------------------------------------------- */
+function renderCustomerTokens(){
+  const bar = document.getElementById('custStatusBar');
+  const grid = document.getElementById('custTokensGrid');
+  const countEl = document.getElementById('custOrderCount');
+  
+  const myOrders = orders.filter(o => myTokenIds.has(o.id));
+  if(myOrders.length === 0){
+    bar.style.display = 'none';
+    return;
+  }
+  bar.style.display = 'block';
+  countEl.textContent = `${myOrders.length} Order${myOrders.length>1?'s':''}`;
+
+  grid.innerHTML = myOrders.slice(-6).reverse().map(o => {
+    let statusBadge = '';
+    if(o.status === 'pending') statusBadge = '<span class="cust-token-status status-tag-pending">⏳ Preparing</span>';
+    else if(o.status === 'ready') statusBadge = '<span class="cust-token-status status-tag-ready">🍃 Ready to Pick!</span>';
+    else if(o.status === 'not_picked') statusBadge = '<span class="cust-token-status status-tag-not_picked">⚠️ Call Shop</span>';
+    else statusBadge = '<span class="cust-token-status status-tag-picked">✅ Picked Up</span>';
+
+    return `
+      <div class="cust-token-card ${o.status}">
+        <div class="cust-token-top">
+          <span class="token-badge-large">Token #${o.tokenNumber || o.id.replace('TOKEN-','')}</span>
+          ${statusBadge}
+        </div>
+        <div style="font-weight:700; font-size:14px; margin-top:2px;">${o.itemName} × ${o.qty}</div>
+        <div style="font-size:12px; color:var(--ink-soft); display:flex; justify-content:space-between; align-items:center;">
+          <span>₹${o.price * o.qty} (${o.customerName})</span>
+          <span class="mono">${elapsedLabel(o.createdAt)}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ----------------------------------------------------
+   ADMIN ACTIONS & NOTIFICATIONS
+---------------------------------------------------- */
+function getNotificationMessage(o){
+  return `Namaste ${o.customerName}, your fresh ${o.itemName} (Token #${o.tokenNumber || o.id}) is READY for pickup at Raje Paan Darbar! Please collect at counter.`;
+}
+
+async function markReady(orderId){
+  const o = orders.find(x => x.id === orderId);
+  if(!o) return;
+  o.status = 'ready';
+  o.readyAt = Date.now();
+  await saveOrders(orders);
+
+  const msg = getNotificationMessage(o);
+  smsLog.unshift({time: Date.now(), phone: o.phone, name: o.customerName, message: msg, token: o.tokenNumber || o.id});
+  await saveSmsLog(smsLog);
+
+  playBellSound('ready');
+  showToast('whatsapp', 'Customer Notified', `Token #${o.tokenNumber} marked ready. Notification sent to ${o.phone}.`);
+  renderAdmin();
+  renderCustomerTokens();
+}
+
+async function markPicked(orderId){
+  const o = orders.find(x => x.id === orderId);
+  if(!o) return;
+  o.status = 'picked';
+  o.pickedAt = Date.now();
+  await saveOrders(orders);
+
+  showToast('order', 'Order Completed', `Token #${o.tokenNumber} (${o.customerName}) picked up.`);
+  renderAdmin();
+  renderCustomerTokens();
+}
+
+async function updateSettings(){
+  const p = parseFloat(document.getElementById('pendingThreshold').value) || 15;
+  const n = parseFloat(document.getElementById('notPickedThreshold').value) || 60;
+  settings = {pendingReminderMin: p, notPickedAlertMin: n};
+  await saveSettings(settings);
+}
+
+function applySettingsToInputs(){
+  if(document.getElementById('pendingThreshold')){
+    document.getElementById('pendingThreshold').value = settings.pendingReminderMin;
+    document.getElementById('notPickedThreshold').value = settings.notPickedAlertMin;
+  }
+}
+
+/* ----------------------------------------------------
+   ADMIN KANBAN TICKETS
+---------------------------------------------------- */
+function elapsedLabel(fromTs){
+  if(!fromTs) return 'just now';
+  const mins = Math.floor((Date.now() - fromTs) / 60000);
+  if(mins < 1) return 'just now';
+  if(mins < 60) return mins + 'm ago';
+  const h = Math.floor(mins/60), m = mins%60;
+  return h + 'h ' + m + 'm ago';
+}
+
+function ticketHtml(o, kind){
+  const elapsedFrom = kind==='ready' ? o.readyAt : (kind==='notpicked' ? o.readyAt : o.createdAt);
+  const msg = encodeURIComponent(getNotificationMessage(o));
+  const waLink = `https://api.whatsapp.com/send?phone=91${o.phone}&text=${msg}`;
+  const smsLink = `sms:${o.phone}?body=${msg}`;
+
+  let primaryAction = '';
+  if(kind === 'pending'){
+    primaryAction = `<button class="btn-mark-ready" onclick="markReady('${o.id}')">✓ Mark Ready</button>`;
+  } else {
+    primaryAction = `<button class="btn-mark-picked" onclick="markPicked('${o.id}')">✓ Picked Up</button>`;
+  }
+
+  return `
+    <div class="ticket ${o.status}">
+      <div class="ticket-top">
+        <div>
+          <span class="ticket-token-number">Token #${o.tokenNumber || o.id.replace('TOKEN-','')}</span>
+          <div class="ticket-item">${o.itemName}</div>
+          <div class="ticket-qty">Qty: ${o.qty} · Total: ₹${o.price * o.qty}</div>
+        </div>
+      </div>
+      <div class="ticket-customer">
+        <div class="name">${o.customerName}</div>
+        <a class="phone-link" href="tel:${o.phone}">📞 ${o.phone}</a>
+      </div>
+      <div class="ticket-meta">
+        <span class="elapsed">${elapsedLabel(elapsedFrom)}</span>
+        <span>${kind==='pending' ? 'ordered' : kind==='ready' ? 'ready' : 'overdue'}</span>
+      </div>
+      <div class="ticket-actions">
+        ${primaryAction}
+        <div class="action-row">
+          <a class="btn-whatsapp" href="${waLink}" target="_blank" title="Send WhatsApp alert">💬 WhatsApp</a>
+          <a class="btn-sms" href="${smsLink}" title="Send SMS alert">✉️ SMS</a>
+          <a class="btn-call" href="tel:${o.phone}" title="Call customer">📞 Call</a>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderAdmin(){
+  const pending = orders.filter(o => o.status==='pending');
+  const ready = orders.filter(o => o.status==='ready');
+  const notPicked = orders.filter(o => o.status==='not_picked');
+  const picked = orders.filter(o => o.status==='picked');
+
+  document.getElementById('countPending').textContent = pending.length;
+  document.getElementById('countReady').textContent = ready.length;
+  document.getElementById('countNotPicked').textContent = notPicked.length;
+
+  document.getElementById('colPending').innerHTML = pending.length
+    ? pending.sort((a,b)=>a.createdAt-b.createdAt).map(o=>ticketHtml(o,'pending')).join('')
+    : `<div class="empty-col">No pending orders.</div>`;
+  document.getElementById('colReady').innerHTML = ready.length
+    ? ready.sort((a,b)=>a.readyAt-b.readyAt).map(o=>ticketHtml(o,'ready')).join('')
+    : `<div class="empty-col">No ready orders waiting.</div>`;
+  document.getElementById('colNotPicked').innerHTML = notPicked.length
+    ? notPicked.sort((a,b)=>a.readyAt-b.readyAt).map(o=>ticketHtml(o,'notpicked')).join('')
+    : `<div class="empty-col">All clear.</div>`;
+
+  const bannerArea = document.getElementById('bannerArea');
+  let banners = '';
+  const overdue = pending.filter(o => (Date.now()-o.createdAt)/60000 >= settings.pendingReminderMin);
+  if(overdue.length){
+    banners += `<div class="reminder-banner">⏰ <span><b>${overdue.length}</b> order${overdue.length>1?'s':''} waiting over ${settings.pendingReminderMin} min: ${overdue.map(o=>'Token #'+(o.tokenNumber||o.id)+' ('+o.customerName+')').join(', ')}.</span></div>`;
+  }
+  if(notPicked.length){
+    banners += `<div class="alert-banner">📦 ${notPicked.length} order${notPicked.length>1?'s':''} not picked up: ${notPicked.map(o=>'Token #'+(o.tokenNumber||o.id)+' - '+o.phone).join(', ')}.</div>`;
+  }
+  bannerArea.innerHTML = banners;
+
+  const smsEl = document.getElementById('smsLog');
+  smsEl.innerHTML = smsLog.length
+    ? smsLog.slice(0,25).map(s => `<div class="sms-row"><span class="time">${new Date(s.time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span><span>To <b>${s.name}</b> (${s.phone}): "${s.message}"</span></div>`).join('')
+    : `<div class="empty-col">No messages sent yet.</div>`;
+
+  const compEl = document.getElementById('completedList');
+  compEl.innerHTML = picked.length
+    ? picked.slice(-20).reverse().map(o => `<span class="completed-chip">#${o.tokenNumber||o.id} · ${o.customerName} (${o.phone})</span>`).join('')
+    : `<span class="empty-col">Nothing completed yet.</span>`;
+
+  updateAdminBadge();
+}
+
+function updateAdminBadge(){
+  const pendingCount = orders.filter(o => o.status === 'pending').length;
+  const badge = document.getElementById('adminActiveBadge');
+  if(pendingCount > 0){
+    badge.style.display = 'inline-flex';
+    badge.textContent = pendingCount;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function showToast(type, title, message){
+  const stack = document.getElementById('toastStack');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.innerHTML = `<b>${title}</b>${message}`;
+  stack.appendChild(el);
+  setTimeout(()=>{ 
+    el.style.transition='opacity 0.4s, transform 0.4s'; 
+    el.style.opacity='0'; 
+    el.style.transform='translateX(40px)';
+    setTimeout(()=>el.remove(), 400); 
+  }, 5000);
+}
+
+/* ----------------------------------------------------
+   TIMERS & REALTIME SYNC
+---------------------------------------------------- */
+async function tick(){
+  let changed = false;
+  const now = Date.now();
+
+  orders.forEach(o => {
+    if(o.status === 'pending'){
+      const mins = (now - o.createdAt)/60000;
+      if(mins >= settings.pendingReminderMin && !remindedIds.has(o.id)){
+        remindedIds.add(o.id);
+        playBellSound('order');
+        showToast('alert', 'Order Overdue!', `Token #${o.tokenNumber} (${o.customerName}) is waiting for ${Math.floor(mins)} min.`);
+      }
+    }
+    if(o.status === 'ready'){
+      const mins = (now - o.readyAt)/60000;
+      if(mins >= settings.notPickedAlertMin){
+        o.status = 'not_picked';
+        changed = true;
+        if(!notPickedAlertedIds.has(o.id)){
+          notPickedAlertedIds.add(o.id);
+          showToast('alert', 'Not Picked Up', `Token #${o.tokenNumber} (${o.customerName} - ${o.phone}) has not been picked up.`);
+        }
+      }
+    }
+  });
+
+  if(changed) await saveOrders(orders);
+  if(currentView === 'admin') renderAdmin();
+  if(currentView === 'customer') renderCustomerTokens();
+}
+
+async function poll(){
+  const fresh = await loadOrders();
+  let hasNew = false;
+  fresh.forEach(o => {
+    if(!knownOrderIds.has(o.id)){
+      knownOrderIds.add(o.id);
+      if(initialised){
+        hasNew = true;
+        showToast('order', 'New Order Received!', `Token #${o.tokenNumber}: ${o.customerName} (${o.phone}) - ${o.itemName} × ${o.qty}.`);
+      }
+    }
+  });
+  if(hasNew) playBellSound('order');
+  orders = fresh;
+
+  const freshSettings = await loadSettings();
+  settings = freshSettings;
+  applySettingsToInputs();
+
+  const freshSms = await loadSmsLog();
+  smsLog = freshSms;
+
+  if(currentView === 'admin') renderAdmin();
+  if(currentView === 'customer') renderCustomerTokens();
+  updateAdminBadge();
+  initialised = true;
+}
+
+window.addEventListener('storage', (event) => {
+  if(event.key === ORDER_STORAGE_KEY || event.key === SMS_STORAGE_KEY || event.key === SETTINGS_STORAGE_KEY){
+    poll();
+  }
+});
+if(orderChannel){
+  orderChannel.onmessage = () => poll();
+}
+
+function enterSite(){
+  const s = document.getElementById('splashScreen');
+  if(s){
+    s.classList.add('hidden');
+    document.body.classList.remove('locked');
+    setTimeout(()=>s.remove(), 600);
+  }
+}
+
+async function init(){
+  renderMenu();
+  myTokenIds = loadMyTokens();
+  orders = await loadOrders();
+  orders.forEach(o => knownOrderIds.add(o.id));
+  settings = await loadSettings();
+  applySettingsToInputs();
+  smsLog = await loadSmsLog();
+
+  renderCustomerTokens();
+  renderAdmin();
+  updateAdminBadge();
+  initialised = true;
+
+  setInterval(tick, 5000);
+  setInterval(poll, 1500);
+}
+
+init();
+</script>
+</body>
+</html>
