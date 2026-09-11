@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Raje Paan Darbar — Admin Kitchen & Order Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rozha+One&family=Poppins:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBF3E3;
+    --paper-dark:#F3E7CC;
+    --card:#FFFDF8;
+    --ink:#2B2620;
+    --ink-soft:#7A6C58;
+    --leaf:#1B4332;
+    --leaf-light:#2F6B4F;
+    --leaf-pale:#DCEBE1;
+    --saffron:#E8A33D;
+    --saffron-pale:#FBEBD3;
+    --maroon:#7A1F2B;
+    --maroon-pale:#F3DEE0;
+    --whatsapp:#25D366;
+    --whatsapp-dark:#128C7E;
+    --gold:#C9A227;
+    --grey:#9B8F7C;
+    --grey-pale:#EFEAE0;
+    --shadow: 0 6px 20px rgba(43,38,32,0.12);
+    --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Poppins',sans-serif;-webkit-font-smoothing:antialiased;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .display{font-family:'Rozha One',serif;}
+
+  header.shop-header{
+    background:var(--leaf);
+    color:var(--paper);
+    padding:14px 20px;
+    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    position:sticky; top:0; z-index:50;
+    box-shadow:0 4px 14px rgba(0,0,0,0.18);
+  }
+  .brand{display:flex; align-items:center; gap:12px;}
+  .brand h1{font-family:'Rozha One',serif; font-size:22px; margin:0; letter-spacing:0.5px; line-height:1.15;}
+  .brand p{margin:0; font-size:11px; letter-spacing:2px; text-transform:uppercase; opacity:0.75;}
+
+  .header-actions{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .badge-count{
+    background:var(--maroon); color:#fff; border-radius:999px; font-size:11px; min-width:18px; height:18px;
+    display:inline-flex; align-items:center; justify-content:center; padding:0 6px; font-family:'IBM Plex Mono',monospace; font-weight:700;
+  }
+  .sound-btn, .notify-perm-btn{
+    background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.25); color:#fff; padding:7px 12px;
+    border-radius:999px; font-size:12px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:5px;
+  }
+  .sound-btn:hover, .notify-perm-btn:hover{background:rgba(255,255,255,0.2);}
+  .btn-lock{
+    background:var(--maroon-pale); color:var(--maroon); border:1px solid var(--maroon); padding:6px 12px;
+    border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;
+  }
+
+  main{max-width:1050px; margin:0 auto; padding:20px 16px 80px;}
+  .admin-topbar{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:18px;}
+  .admin-topbar h2{font-family:'Rozha One',serif; color:var(--leaf); font-size:26px; margin:0;}
+  .settings-panel{
+    display:flex; gap:12px; align-items:center; background:var(--card); border-radius:12px; padding:10px 14px; box-shadow:var(--shadow); flex-wrap:wrap;
+  }
+  .settings-panel label{font-size:11px; color:var(--ink-soft); font-weight:600; display:flex; align-items:center; gap:6px;}
+  .settings-panel input{
+    width:56px; padding:6px 8px; border-radius:6px; border:1.5px solid var(--grey-pale); font-family:'IBM Plex Mono',monospace; font-size:13px;
+  }
+
+  .reminder-banner{
+    background:var(--saffron-pale); border:1.5px solid var(--saffron); color:#6b4a10; padding:12px 16px; border-radius:12px;
+    margin-bottom:16px; font-size:13.5px; display:flex; align-items:center; gap:10px;
+  }
+  .alert-banner{
+    background:var(--maroon-pale); border:1.5px solid var(--maroon); color:var(--maroon); padding:12px 16px; border-radius:12px;
+    margin-bottom:16px; font-size:13.5px; display:flex; align-items:center; gap:10px; font-weight:600;
+  }
+
+  .kanban{display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;}
+  @media (max-width:820px){.kanban{grid-template-columns:1fr;}}
+  .column{background:var(--paper-dark); border-radius:14px; padding:14px; min-height:140px;}
+  .column-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding:0 4px;}
+  .column-head h4{margin:0; font-size:13px; text-transform:uppercase; letter-spacing:1px; font-weight:700;}
+  .col-pending h4{color:var(--saffron);}
+  .col-ready h4{color:var(--leaf-light);}
+  .col-notpicked h4{color:var(--maroon);}
+
+  .ticket{
+    background:var(--card); border-radius:12px; padding:14px; margin-bottom:12px; box-shadow:var(--shadow);
+    border-left:5px solid var(--grey); position:relative;
+  }
+  .ticket.pending{border-left-color:var(--saffron);}
+  .ticket.ready{border-left-color:var(--leaf-light);}
+  .ticket.not_picked{border-left-color:var(--maroon); animation:pulse 1.6s infinite;}
+  @keyframes pulse{0%,100%{box-shadow:var(--shadow);}50%{box-shadow:0 0 0 4px rgba(122,31,43,0.18);}}
+
+  .ticket-top{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+  .ticket-token-number{
+    background:var(--leaf); color:#fff; padding:4px 8px; border-radius:6px; font-family:'IBM Plex Mono',monospace;
+    font-weight:700; font-size:14px; display:inline-block;
+  }
+  .ticket-item{font-weight:700; font-size:14.5px; margin-top:4px;}
+  .ticket-qty{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-soft);}
+  .ticket-customer{margin-top:8px; font-size:13px; display:flex; justify-content:space-between; align-items:center;}
+  .ticket-customer .name{font-weight:600;}
+  .ticket-customer .phone-link{
+    color:var(--leaf); font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:700; text-decoration:none;
+    background:var(--leaf-pale); padding:3px 8px; border-radius:6px;
+  }
+  .ticket-meta{display:flex; justify-content:space-between; align-items:center; margin-top:10px; font-size:11.5px; color:var(--ink-soft);}
+  .elapsed{font-family:'IBM Plex Mono',monospace;}
+
+  .ticket-actions{display:flex; flex-direction:column; gap:6px; margin-top:12px;}
+  .action-row{display:flex; gap:6px;}
+  .action-row button, .action-row a{
+    flex:1; border:none; padding:8px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; text-align:center;
+    text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:4px;
+  }
+  .btn-mark-ready{background:var(--leaf); color:#fff; width:100%;}
+  .btn-mark-picked{background:var(--leaf-pale); color:var(--leaf); width:100%; border:1px solid var(--leaf-light);}
+  .btn-whatsapp{background:var(--whatsapp); color:#fff;}
+  .btn-sms{background:#2E5C88; color:#fff;}
+  .btn-call{background:var(--maroon); color:#fff;}
+  .empty-col{color:var(--grey); font-size:12.5px; text-align:center; padding:20px 8px;}
+
+  .sms-log-section, .completed-section{margin-top:26px;}
+  .sms-log-section h4, .completed-section h4{
+    font-size:13px; text-transform:uppercase; letter-spacing:1px; color:var(--ink-soft); margin:0 0 10px;
+  }
+  .sms-log{background:var(--card); border-radius:12px; padding:6px 14px; box-shadow:var(--shadow); max-height:180px; overflow-y:auto;}
+  .sms-row{padding:9px 0; border-bottom:1px solid var(--grey-pale); font-size:12.5px; display:flex; gap:8px; align-items:flex-start;}
+  .sms-row:last-child{border-bottom:none;}
+  .sms-row .time{font-family:'IBM Plex Mono',monospace; color:var(--grey); flex-shrink:0;}
+  .completed-list{display:flex; flex-wrap:wrap; gap:8px;}
+  .completed-chip{
+    background:var(--grey-pale); color:var(--ink-soft); font-size:11.5px; padding:6px 12px; border-radius:999px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+
+  /* Modals */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(27,67,50,0.6); display:flex; align-items:center; justify-content:center;
+    z-index:100; padding:16px; backdrop-filter:blur(3px);
+  }
+  .modal{
+    background:var(--paper); border-radius:16px; padding:26px; max-width:400px; width:100%; box-shadow:0 20px 50px rgba(0,0,0,0.3);
+    position:relative; text-align:center;
+  }
+  .pin-input{
+    font-family:'IBM Plex Mono',monospace; font-size:28px; letter-spacing:14px; text-align:center;
+    width:200px; margin:16px auto; padding:10px; border-radius:10px; border:2px solid var(--leaf); background:#fff;
+  }
+  .btn-primary{
+    width:100%; background:var(--leaf); color:#fff; border:none; padding:12px; border-radius:999px; font-weight:700; font-size:14px; cursor:pointer;
+  }
+  .field-error{color:var(--maroon); font-size:12px; margin-top:6px; min-height:16px;}
+
+  /* Alert Bell Modal */
+  .admin-order-alert-modal{
+    background:#fff; border-radius:16px; padding:24px; max-width:400px; width:100%; text-align:center;
+    box-shadow:0 25px 60px rgba(0,0,0,0.4); border-top:6px solid var(--saffron);
+    animation:bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes bounceIn{0%{transform:scale(0.8); opacity:0;} 100%{transform:scale(1); opacity:1;}}
+  .admin-alert-bell{font-size:48px; animation:ringBell 1s infinite alternate;}
+  @keyframes ringBell{0%{transform:rotate(-15deg);} 100%{transform:rotate(15deg);}}
+  .admin-alert-token{
+    background:var(--saffron-pale); border:1.5px solid var(--saffron); border-radius:10px; padding:12px; margin:14px 0;
+  }
+
+  /* Toasts */
+  .toast-stack{position:fixed; top:80px; right:16px; z-index:200; display:flex; flex-direction:column; gap:10px; max-width:340px; pointer-events:none;}
+  .toast{
+    background:var(--leaf); color:#fff; padding:12px 16px; border-radius:10px; font-size:13px; box-shadow:0 10px 24px rgba(0,0,0,0.25);
+    animation:slidein 0.25s ease; pointer-events:auto;
+  }
+  .toast.sms{background:#2E5C88;}
+  .toast.whatsapp{background:var(--whatsapp-dark);}
+  .toast.alert{background:var(--maroon);}
+  .toast.order{background:var(--leaf-light);}
+  .toast b{display:block; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; opacity:0.9; margin-bottom:2px;}
+  @keyframes slidein{from{transform:translateX(30px); opacity:0;} to{transform:translateX(0); opacity:1;}}
+</style>
+</head>
+<body>
+
+<header class="shop-header">
+  <div class="brand">
+    <div>
+      <h1>🍃 Raje Paan Darbar</h1>
+      <p>Staff Kitchen &amp; Order Notification Desk</p>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="notify-perm-btn" onclick="requestBrowserNotification()"><span>📲 Push Alerts</span></button>
+    <button class="sound-btn" id="btnSoundToggle" onclick="toggleSound()">🔔 Sound ON</button>
+    <button class="btn-lock" onclick="lockAdmin()">🔒 Lock</button>
+  </div>
+</header>
+
+<main id="adminContent">
+  <div class="admin-topbar">
+    <h2>Live Order Desk</h2>
+    <div class="settings-panel">
+      <label>⏰ Pending reminder (min)
+        <input type="number" min="0.5" step="0.5" id="pendingThreshold" value="15" onchange="updateSettings()">
+      </label>
+      <label>📦 Not-picked alert (min)
+        <input type="number" min="1" step="1" id="notPickedThreshold" value="60" onchange="updateSettings()">
+      </label>
+      <label>📱 Shop WhatsApp
+        <input type="tel" id="shopWhatsApp" style="width:110px;" value="9876543210" onchange="updateSettings()">
+      </label>
+      <label>🔑 Staff PIN
+        <input type="text" id="staffPinInput" style="width:55px;" maxlength="4" value="1234" onchange="updateSettings()">
+      </label>
+    </div>
+  </div>
+
+  <div id="bannerArea"></div>
+
+  <div class="kanban">
+    <div class="column col-pending">
+      <div class="column-head">
+        <h4>Pending Preparation</h4>
+        <span class="badge-count" style="background:var(--saffron); color:var(--leaf);" id="countPending">0</span>
+      </div>
+      <div id="colPending"></div>
+    </div>
+    <div class="column col-ready">
+      <div class="column-head">
+        <h4>Ready for Pickup</h4>
+        <span class="badge-count" style="background:var(--leaf-light);" id="countReady">0</span>
+      </div>
+      <div id="colReady"></div>
+    </div>
+    <div class="column col-notpicked">
+      <div class="column-head">
+        <h4>Overdue / Not Picked</h4>
+        <span class="badge-count" style="background:var(--maroon);" id="countNotPicked">0</span>
+      </div>
+      <div id="colNotPicked"></div>
+    </div>
+  </div>
+
+  <div class="sms-log-section">
+    <h4>📱 Notification &amp; SMS History</h4>
+    <div class="sms-log" id="smsLog">
+      <div class="empty-col">No messages sent yet.</div>
+    </div>
+  </div>
+
+  <div class="completed-section">
+    <h4>✅ Picked Up Today</h4>
+    <div class="completed-list" id="completedList">
+      <span class="empty-col">Nothing completed yet.</span>
+    </div>
+  </div>
+</main>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<script>
+let orders = [];
+let settings = {pendingReminderMin:15, notPickedAlertMin:60, shopWhatsApp:'9876543210', staffPin:'1234'};
+let smsLog = [];
+let knownOrderIds = new Set();
+let remindedIds = new Set();
+let notPickedAlertedIds = new Set();
+let initialised = false;
+let soundEnabled = true;
+
+const ORDER_STORAGE_KEY = 'raje_paan_orders';
+const SETTINGS_STORAGE_KEY = 'raje_paan_settings';
+const SMS_STORAGE_KEY = 'raje_paan_sms_log';
+const ADMIN_AUTH_KEY = 'raje_paan_admin_auth_page';
+const orderChannel = 'BroadcastChannel' in window ? new BroadcastChannel('raje_paan_orders_channel') : null;
+
+/* Sound system */
+function playBellSound(type = 'order'){
+  if(!soundEnabled) return;
+  try{
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if(!AudioContext) return;
+    const ctx = new AudioContext();
+    const now = ctx.currentTime;
+    
+    if(type === 'order'){
+      const tones = [783.99, 1046.50, 1318.51];
+      tones.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + (idx * 0.14));
+        gain.gain.setValueAtTime(0.35, now + (idx * 0.14));
+        gain.gain.exponentialRampToValueAtTime(0.001, now + (idx * 0.14) + 0.5);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + (idx * 0.14));
+        osc.stop(now + (idx * 0.14) + 0.5);
+      });
+    } else {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(659.25, now);
+      osc.frequency.setValueAtTime(880.00, now + 0.15);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.6);
+    }
+  }catch(e){}
+}
+
+function toggleSound(){
+  soundEnabled = !soundEnabled;
+  document.getElementById('btnSoundToggle').textContent = soundEnabled ? '🔔 Sound ON' : '🔕 Sound OFF';
+  if(soundEnabled) playBellSound('order');
+}
+
+function requestBrowserNotification(){
+  if('Notification' in window){
+    Notification.requestPermission().then(perm => {
+      if(perm === 'granted'){
+        showToast('order', 'Notifications Enabled', 'Kitchen order alerts active on this device!');
+        new Notification("🔔 Raje Paan Kitchen Alerts", { body: "Push alerts active for new incoming orders!" });
+      }
+    });
+  }
+}
+
+function sendBrowserNotification(title, bodyText){
+  if('Notification' in window && Notification.permission === 'granted'){
+    try{ new Notification(title, { body: bodyText }); }catch(e){}
+  }
+}
+
+/* Security PIN */
+function checkAuth(){
+  const isAuth = sessionStorage.getItem(ADMIN_AUTH_KEY) === 'true';
+  if(!isAuth) openPinModal();
+}
+
+function openPinModal(){
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'pinModalOverlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <h3 style="color:var(--leaf); font-size:22px;">🔑 Staff Security PIN</h3>
+      <p style="font-size:13px; color:var(--ink-soft); margin:6px 0 16px;">Enter 4-digit PIN to access the kitchen order desk.</p>
+      
+      <input type="password" id="enteredPin" class="pin-input" maxlength="4" placeholder="••••" inputmode="numeric" pattern="[0-9]*" autofocus onkeydown="if(event.key==='Enter') verifyPin()">
+      <div class="field-error" id="pinError"></div>
+
+      <button class="btn-primary" style="margin-top:10px;" onclick="verifyPin()">Unlock Kitchen Desk</button>
+      <p style="font-size:11.5px; color:var(--grey); margin-top:14px;">Default Staff PIN: <b>1234</b></p>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  setTimeout(()=>document.getElementById('enteredPin')?.focus(), 100);
+}
+
+function verifyPin(){
+  const input = document.getElementById('enteredPin');
+  const err = document.getElementById('pinError');
+  const expectedPin = settings.staffPin || '1234';
+
+  if(input.value === expectedPin){
+    sessionStorage.setItem(ADMIN_AUTH_KEY, 'true');
+    const el = document.getElementById('pinModalOverlay');
+    if(el) el.remove();
+    playBellSound('ready');
+    showToast('order', 'Kitchen Desk Unlocked', 'Live orders active.');
+  } else {
+    err.textContent = '❌ Incorrect PIN. Please try again.';
+    input.value = '';
+    input.focus();
+  }
+}
+
+function lockAdmin(){
+  sessionStorage.removeItem(ADMIN_AUTH_KEY);
+  openPinModal();
+}
+
+async function loadOrders(){
+  try{
+    const val = localStorage.getItem(ORDER_STORAGE_KEY);
+    return val ? JSON.parse(val) : [];
+  }catch(e){ return []; }
+}
+async function saveOrders(list){
+  try{
+    localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(list));
+    if(orderChannel) orderChannel.postMessage({type:'orders-updated'});
+  }catch(e){}
+}
+async function loadSettings(){
+  try{
+    const val = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    return val ? JSON.parse(val) : {pendingReminderMin:15, notPickedAlertMin:60, shopWhatsApp:'9876543210', staffPin:'1234'};
+  }catch(e){ return {pendingReminderMin:15, notPickedAlertMin:60, shopWhatsApp:'9876543210', staffPin:'1234'}; }
+}
+async function saveSettings(s){
+  try{ localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(s)); }catch(e){}
+}
+async function loadSmsLog(){
+  try{
+    const val = localStorage.getItem(SMS_STORAGE_KEY);
+    return val ? JSON.parse(val) : [];
+  }catch(e){ return []; }
+}
+async function saveSmsLog(list){
+  try{ localStorage.setItem(SMS_STORAGE_KEY, JSON.stringify(list)); }catch(e){}
+}
+
+async function updateSettings(){
+  const p = parseFloat(document.getElementById('pendingThreshold').value) || 15;
+  const n = parseFloat(document.getElementById('notPickedThreshold').value) || 60;
+  const wa = document.getElementById('shopWhatsApp').value.trim() || '9876543210';
+  const pin = document.getElementById('staffPinInput').value.trim() || '1234';
+
+  settings = {pendingReminderMin: p, notPickedAlertMin: n, shopWhatsApp: wa, staffPin: pin};
+  await saveSettings(settings);
+  showToast('order', 'Settings Updated', 'Timers, WhatsApp number & PIN saved.');
+}
+function applySettingsToInputs(){
+  document.getElementById('pendingThreshold').value = settings.pendingReminderMin;
+  document.getElementById('notPickedThreshold').value = settings.notPickedAlertMin;
+  document.getElementById('shopWhatsApp').value = settings.shopWhatsApp || '9876543210';
+  document.getElementById('staffPinInput').value = settings.staffPin || '1234';
+}
+
+function getNotificationMessage(o){
+  return `Namaste ${o.customerName}, your fresh ${o.itemName} (Token #${o.tokenNumber || o.id}) is READY for pickup at Raje Paan Darbar!`;
+}
+
+async function markReady(orderId){
+  const o = orders.find(x => x.id === orderId);
+  if(!o) return;
+  o.status = 'ready';
+  o.readyAt = Date.now();
+  await saveOrders(orders);
+
+  const msg = getNotificationMessage(o);
+  smsLog.unshift({time: Date.now(), phone: o.phone, name: o.customerName, message: msg, token: o.tokenNumber || o.id});
+  await saveSmsLog(smsLog);
+
+  playBellSound('ready');
+  showToast('whatsapp', 'Customer Alerted', `Token #${o.tokenNumber} marked ready.`);
+  renderAdmin();
+}
+
+async function markPicked(orderId){
+  const o = orders.find(x => x.id === orderId);
+  if(!o) return;
+  o.status = 'picked';
+  o.pickedAt = Date.now();
+  await saveOrders(orders);
+  renderAdmin();
+}
+
+function elapsedLabel(fromTs){
+  if(!fromTs) return 'just now';
+  const mins = Math.floor((Date.now() - fromTs) / 60000);
+  if(mins < 1) return 'just now';
+  if(mins < 60) return mins + 'm ago';
+  const h = Math.floor(mins/60), m = mins%60;
+  return h + 'h ' + m + 'm ago';
+}
+
+function showToast(type, title, message){
+  const stack = document.getElementById('toastStack');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.innerHTML = `<b>${title}</b>${message}`;
+  stack.appendChild(el);
+  setTimeout(()=>{ el.style.transition='opacity 0.4s'; el.style.opacity='0'; setTimeout(()=>el.remove(), 400); }, 5000);
+}
+
+function triggerAdminNewOrderAlert(order){
+  playBellSound('order');
+  sendBrowserNotification(`🔔 New Order! Token #${order.tokenNumber}`, `${order.customerName} (${order.phone}) ordered ${order.itemName} × ${order.qty}`);
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'adminAlertOverlay';
+  overlay.innerHTML = `
+    <div class="admin-order-alert-modal">
+      <div class="admin-alert-bell">🔔</div>
+      <h3 style="color:var(--leaf); margin:6px 0 2px;">NEW ORDER RECEIVED!</h3>
+      <p style="font-size:13px; color:var(--ink-soft); margin:0;">A new counter order is waiting for preparation.</p>
+
+      <div class="admin-alert-token">
+        <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#855800;">Token Number</div>
+        <div style="font-family:'Rozha One',serif; font-size:32px; color:var(--leaf); margin:2px 0;">#${order.tokenNumber}</div>
+        <div style="font-weight:700; font-size:14px;">${order.itemName} × ${order.qty}</div>
+        <div style="font-size:12.5px; color:var(--ink); margin-top:4px;">Customer: <b>${order.customerName}</b> (📞 ${order.phone})</div>
+      </div>
+
+      <button class="btn-primary" style="width:100%;" onclick="dismissAdminAlert()">✓ View &amp; Prepare Order</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+function dismissAdminAlert(){
+  const el = document.getElementById('adminAlertOverlay');
+  if(el) el.remove();
+}
+
+function ticketHtml(o, kind){
+  const elapsedFrom = kind==='ready' ? o.readyAt : (kind==='notpicked' ? o.readyAt : o.createdAt);
+  const msg = encodeURIComponent(getNotificationMessage(o));
+  const waLink = `https://api.whatsapp.com/send?phone=91${o.phone}&text=${msg}`;
+  const smsLink = `sms:${o.phone}?body=${msg}`;
+
+  let primaryAction = kind === 'pending'
+    ? `<button class="btn-mark-ready" onclick="markReady('${o.id}')">✓ Mark Ready</button>`
+    : `<button class="btn-mark-picked" onclick="markPicked('${o.id}')">✓ Picked Up</button>`;
+
+  return `
+    <div class="ticket ${o.status}">
+      <div class="ticket-top">
+        <div>
+          <span class="ticket-token-number">Token #${o.tokenNumber || o.id.replace('TOKEN-','')}</span>
+          <div class="ticket-item">${o.itemName}</div>
+          <div class="ticket-qty">Qty: ${o.qty} · ₹${o.price * o.qty}</div>
+        </div>
+      </div>
+      <div class="ticket-customer">
+        <div class="name">${o.customerName}</div>
+        <a class="phone-link" href="tel:${o.phone}">📞 ${o.phone}</a>
+      </div>
+      <div class="ticket-meta">
+        <span class="elapsed">${elapsedLabel(elapsedFrom)}</span>
+        <span>${kind==='pending' ? 'ordered' : kind==='ready' ? 'ready' : 'overdue'}</span>
+      </div>
+      <div class="ticket-actions">
+        ${primaryAction}
+        <div class="action-row">
+          <a class="btn-whatsapp" href="${waLink}" target="_blank">💬 WhatsApp</a>
+          <a class="btn-sms" href="${smsLink}">✉️ SMS</a>
+          <a class="btn-call" href="tel:${o.phone}">📞 Call</a>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderAdmin(){
+  const pending = orders.filter(o => o.status==='pending');
+  const ready = orders.filter(o => o.status==='ready');
+  const notPicked = orders.filter(o => o.status==='not_picked');
+  const picked = orders.filter(o => o.status==='picked');
+
+  document.getElementById('countPending').textContent = pending.length;
+  document.getElementById('countReady').textContent = ready.length;
+  document.getElementById('countNotPicked').textContent = notPicked.length;
+
+  document.getElementById('colPending').innerHTML = pending.length
+    ? pending.sort((a,b)=>a.createdAt-b.createdAt).map(o=>ticketHtml(o,'pending')).join('')
+    : `<div class="empty-col">No pending orders.</div>`;
+  document.getElementById('colReady').innerHTML = ready.length
+    ? ready.sort((a,b)=>a.readyAt-b.readyAt).map(o=>ticketHtml(o,'ready')).join('')
+    : `<div class="empty-col">No ready orders waiting.</div>`;
+  document.getElementById('colNotPicked').innerHTML = notPicked.length
+    ? notPicked.sort((a,b)=>a.readyAt-b.readyAt).map(o=>ticketHtml(o,'notpicked')).join('')
+    : `<div class="empty-col">All clear.</div>`;
+
+  const bannerArea = document.getElementById('bannerArea');
+  let banners = '';
+  const overdue = pending.filter(o => (Date.now()-o.createdAt)/60000 >= settings.pendingReminderMin);
+  if(overdue.length){
+    banners += `<div class="reminder-banner">⏰ <span><b>${overdue.length}</b> order${overdue.length>1?'s':''} waiting over ${settings.pendingReminderMin} min: ${overdue.map(o=>'Token #'+(o.tokenNumber||o.id)+' ('+o.customerName+')').join(', ')}.</span></div>`;
+  }
+  if(notPicked.length){
+    banners += `<div class="alert-banner">📦 ${notPicked.length} order${notPicked.length>1?'s':''} not picked up: ${notPicked.map(o=>'Token #'+(o.tokenNumber||o.id)+' - '+o.phone).join(', ')}.</div>`;
+  }
+  bannerArea.innerHTML = banners;
+
+  const smsEl = document.getElementById('smsLog');
+  smsEl.innerHTML = smsLog.length
+    ? smsLog.slice(0,25).map(s => `<div class="sms-row"><span class="time">${new Date(s.time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span><span>To <b>${s.name}</b> (${s.phone}): "${s.message}"</span></div>`).join('')
+    : `<div class="empty-col">No messages sent yet.</div>`;
+
+  const compEl = document.getElementById('completedList');
+  compEl.innerHTML = picked.length
+    ? picked.slice(-20).reverse().map(o => `<span class="completed-chip">#${o.tokenNumber||o.id} · ${o.customerName} (${o.phone})</span>`).join('')
+    : `<span class="empty-col">Nothing completed yet.</span>`;
+}
+
+async function tick(){
+  let changed = false;
+  const now = Date.now();
+
+  orders.forEach(o => {
+    if(o.status === 'pending'){
+      const mins = (now - o.createdAt)/60000;
+      if(mins >= settings.pendingReminderMin && !remindedIds.has(o.id)){
+        remindedIds.add(o.id);
+        playBellSound('order');
+        showToast('alert', 'Order Overdue!', `Token #${o.tokenNumber} (${o.customerName}) is waiting for ${Math.floor(mins)} min.`);
+      }
+    }
+    if(o.status === 'ready'){
+      const mins = (now - o.readyAt)/60000;
+      if(mins >= settings.notPickedAlertMin){
+        o.status = 'not_picked';
+        changed = true;
+        if(!notPickedAlertedIds.has(o.id)){
+          notPickedAlertedIds.add(o.id);
+          showToast('alert', 'Not Picked Up', `Token #${o.tokenNumber} (${o.customerName} - ${o.phone}) has not been picked up.`);
+        }
+      }
+    }
+  });
+
+  if(changed) await saveOrders(orders);
+  renderAdmin();
+}
+
+async function poll(){
+  const fresh = await loadOrders();
+  let latestNewOrder = null;
+  fresh.forEach(o => {
+    if(!knownOrderIds.has(o.id)){
+      knownOrderIds.add(o.id);
+      if(initialised){
+        latestNewOrder = o;
+      }
+    }
+  });
+  if(latestNewOrder) triggerAdminNewOrderAlert(latestNewOrder);
+  orders = fresh;
+
+  const freshSettings = await loadSettings();
+  settings = freshSettings;
+  applySettingsToInputs();
+
+  const freshSms = await loadSmsLog();
+  smsLog = freshSms;
+
+  renderAdmin();
+  initialised = true;
+}
+
+window.addEventListener('storage', (event) => {
+  if(event.key === ORDER_STORAGE_KEY || event.key === SMS_STORAGE_KEY || event.key === SETTINGS_STORAGE_KEY) poll();
+});
+if(orderChannel){
+  orderChannel.onmessage = () => poll();
+}
+
+async function init(){
+  checkAuth();
+  orders = await loadOrders();
+  orders.forEach(o => knownOrderIds.add(o.id));
+  settings = await loadSettings();
+  applySettingsToInputs();
+  smsLog = await loadSmsLog();
+  renderAdmin();
+  initialised = true;
+
+  setInterval(tick, 5000);
+  setInterval(poll, 1200);
+}
+
+init();
+</script>
+</body>
+</html>
