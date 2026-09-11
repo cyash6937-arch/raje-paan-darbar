@@ -234,6 +234,15 @@
     padding:13px 30px; border-radius:999px; font-family:'Poppins',sans-serif; font-weight:600; font-size:13px;
     letter-spacing:2px; text-transform:uppercase;
   }
+  /* Shop Closed Banner */
+  .shop-closed-banner{
+    background:var(--maroon-pale); border:1.5px solid var(--maroon); color:var(--maroon);
+    border-radius:var(--radius); padding:16px 20px; margin-bottom:20px; text-align:center;
+    box-shadow:var(--shadow); animation:slidein 0.3s ease;
+  }
+  .shop-closed-banner h3{margin:0 0 6px; font-family:'Rozha One',serif; font-size:20px;}
+  .shop-closed-banner p{margin:0; font-size:13px; opacity:0.9;}
+
   body.locked{overflow:hidden;}
 </style>
 </head>
@@ -257,7 +266,7 @@
       <p>Family Paan Point · Fresh Menu</p>
     </div>
   </div>
-  <div class="shop-tagline-badge">
+  <div class="shop-tagline-badge" id="headerStatusBadge">
     <span class="live-dot"></span>
     <span>Live Ordering Active</span>
   </div>
@@ -266,6 +275,12 @@
 <main>
   <!-- CUSTOMER VIEW -->
   <section id="customerView">
+    <!-- Shop Closed Alert Banner -->
+    <div class="shop-closed-banner" id="shopClosedBanner" style="display:none;">
+      <h3>🔴 Counter Ordering Currently Closed</h3>
+      <p>The shop counter is not taking live orders right now. You can still browse our fresh menu below!</p>
+    </div>
+
     <p class="hint-bar">Place your order below to get your Token Number &amp; optionally send a WhatsApp message to the shop!</p>
     
     <!-- Customer Active Orders Status Bar -->
@@ -399,6 +414,7 @@ let orders = [];
 let settings = { shopWhatsApp: '9876543210' };
 let myTokenIds = new Set();
 let firebaseDb = null;
+let shopOpen = true;
 
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyAsEZZ5cz-xsCB8_xxRQjL5vEvAc32i6q4",
@@ -429,8 +445,36 @@ function initFirebaseCloud(){
           renderCustomerTokens();
         }
       });
+
+      // Listen to Shop Open / Closed Status
+      firebaseDb.ref('shopStatus').on('value', (snapshot) => {
+        const val = snapshot.val();
+        if(val !== null){
+          shopOpen = typeof val === 'object' ? (val.isOpen !== false) : (val === true || val === 'open');
+          updateShopOpenUI();
+        }
+      });
     }
   }catch(e){ console.warn("Cloud sync running in local mode", e); }
+}
+
+function updateShopOpenUI(){
+  const badge = document.getElementById('headerStatusBadge');
+  const banner = document.getElementById('shopClosedBanner');
+  if(badge){
+    if(shopOpen){
+      badge.innerHTML = '<span class="live-dot"></span> <span>Live Ordering Active</span>';
+      badge.style.background = 'rgba(255,255,255,0.12)';
+      badge.style.color = '#F8E9C7';
+    } else {
+      badge.innerHTML = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff4d4f;margin-right:6px;"></span> <span>Shop Closed</span>';
+      badge.style.background = 'rgba(255,77,79,0.2)';
+      badge.style.color = '#ff9999';
+    }
+  }
+  if(banner){
+    banner.style.display = shopOpen ? 'none' : 'block';
+  }
 }
 
 async function loadOrders(){
@@ -534,9 +578,41 @@ function toggleRow(itemId){
 }
 
 function handleItemClick(itemId){
+  if(!shopOpen){
+    openShopClosedModal();
+    return;
+  }
   const item = ITEM_INDEX[itemId];
   if(item.tobacco) openAgeGate(itemId);
   else openOrderModal(itemId);
+}
+
+function openShopClosedModal(){
+  const shopPhone = settings.shopWhatsApp || '9876543210';
+  const waUrl = `https://api.whatsapp.com/send?phone=91${shopPhone}&text=Namaste%20Raje%20Paan%20Darbar!%20When%20will%20the%20counter%20open%20for%20orders%3F`;
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'closedModalOverlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <div style="font-size:40px; margin-bottom:8px;">🔴</div>
+      <h3 style="color:var(--maroon); font-size:22px; margin:0 0 6px;">Shop is Currently Closed</h3>
+      <p class="item-sub" style="margin:8px 0 18px; line-height:1.5;">Counter ordering is currently paused. You can still explore our fresh menu or message us on WhatsApp!</p>
+
+      <a href="${waUrl}" target="_blank" class="btn-whatsapp-large" onclick="closeShopClosedModal()" style="display:inline-flex; align-items:center; justify-content:center; gap:8px; background:var(--whatsapp); color:#fff; padding:12px; border-radius:999px; text-decoration:none; font-weight:700; width:100%;">
+        <span>💬 Inquire on WhatsApp</span>
+      </a>
+
+      <button class="btn-ghost" style="width:100%; margin-top:10px; background:transparent; border:1px solid var(--grey-pale); padding:10px; border-radius:999px; cursor:pointer;" onclick="closeShopClosedModal()">Browse Menu Only</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeShopClosedModal(); });
+}
+
+function closeShopClosedModal(){
+  const el = document.getElementById('closedModalOverlay');
+  if(el) el.remove();
 }
 
 function openAgeGate(itemId){

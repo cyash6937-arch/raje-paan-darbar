@@ -200,6 +200,7 @@
     </div>
   </div>
   <div class="header-actions">
+    <button class="sound-btn" id="btnShopToggle" onclick="toggleShopOpen()" style="background:rgba(37,211,102,0.18); border-color:#25D366; color:#9ff0b8; font-weight:700;"><span>🟢 Shop OPEN</span></button>
     <button class="cloud-btn" id="btnCloudStatus" onclick="openCloudModal()"><span>☁️ Cloud DB</span></button>
     <button class="notify-perm-btn" onclick="requestBrowserNotification()"><span>📲 Push Alerts</span></button>
     <button class="sound-btn" id="btnSoundToggle" onclick="toggleSound()">🔔 Sound ON</button>
@@ -279,6 +280,7 @@ let notPickedAlertedIds = new Set();
 let initialised = false;
 let soundEnabled = true;
 let firebaseDb = null;
+let shopOpen = true;
 
 const ORDER_STORAGE_KEY = 'raje_paan_orders';
 const SETTINGS_STORAGE_KEY = 'raje_paan_settings';
@@ -339,6 +341,15 @@ function initFirebaseCloud(){
             }
           }
         });
+
+        // Realtime listener for Shop Open / Closed status
+        firebaseDb.ref('shopStatus').on('value', (snapshot) => {
+          const val = snapshot.val();
+          if(val !== null){
+            shopOpen = typeof val === 'object' ? (val.isOpen !== false) : (val === true || val === 'open');
+            updateShopOpenButton();
+          }
+        });
         return;
       }
     }
@@ -346,6 +357,41 @@ function initFirebaseCloud(){
   }catch(e){
     console.warn("Cloud DB running in local mode", e);
     updateCloudStatusBadge(false);
+  }
+}
+
+function toggleShopOpen(){
+  shopOpen = !shopOpen;
+  if(firebaseDb){
+    firebaseDb.ref('shopStatus').set({
+      isOpen: shopOpen,
+      updatedAt: Date.now()
+    });
+  }
+  localStorage.setItem('raje_paan_shop_open', shopOpen ? 'true' : 'false');
+  updateShopOpenButton();
+  if(shopOpen){
+    playBellSound('ready');
+    showToast('order', 'Shop is OPEN', 'Customer ordering counter is active.');
+  } else {
+    playBellSound('order');
+    showToast('alert', 'Shop is CLOSED', 'Customer ordering counter is paused.');
+  }
+}
+
+function updateShopOpenButton(){
+  const btn = document.getElementById('btnShopToggle');
+  if(!btn) return;
+  if(shopOpen){
+    btn.innerHTML = `<span>🟢 Shop OPEN</span>`;
+    btn.style.borderColor = '#25D366';
+    btn.style.color = '#9ff0b8';
+    btn.style.background = 'rgba(37,211,102,0.18)';
+  } else {
+    btn.innerHTML = `<span>🔴 Shop CLOSED</span>`;
+    btn.style.borderColor = '#ff4d4f';
+    btn.style.color = '#ff9999';
+    btn.style.background = 'rgba(255,77,79,0.25)';
   }
 }
 
