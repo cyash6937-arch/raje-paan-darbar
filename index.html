@@ -466,6 +466,7 @@ function initFirebaseCloud(){
           orders = list;
           localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(list));
           renderCustomerTokens();
+          checkCustomerReadyNotifications();
         }
       });
 
@@ -805,34 +806,102 @@ async function submitOrder(){
 }
 
 /* ----------------------------------------------------
-   CUSTOMER ORDER SUCCESS & WHATSAPP TO ADMIN
+   AUTOMATIC CUSTOMER READY SOUND & ALERT
+---------------------------------------------------- */
+let notifiedReadyTokens = new Set();
+
+function playCustomerReadyChime(){
+  try{
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if(!AudioContext) return;
+    const ctx = new AudioContext();
+    const now = ctx.currentTime;
+    const tones = [523.25, 659.25, 783.99, 1046.50]; // Joyful C major chime
+    tones.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + (idx * 0.12));
+      gain.gain.setValueAtTime(0.35, now + (idx * 0.12));
+      gain.gain.exponentialRampToValueAtTime(0.001, now + (idx * 0.12) + 0.5);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + (idx * 0.12));
+      osc.stop(now + (idx * 0.12) + 0.5);
+    });
+    if('vibrate' in navigator) navigator.vibrate([250, 150, 250]);
+  }catch(e){}
+}
+
+function checkCustomerReadyNotifications(){
+  orders.forEach(o => {
+    if(myTokenIds.has(o.id) && o.status === 'ready' && !notifiedReadyTokens.has(o.id)){
+      notifiedReadyTokens.add(o.id);
+      playCustomerReadyChime();
+      openOrderReadyModal(o);
+      showToast('order', '🍃 Order Ready!', `Token #${o.tokenNumber} is ready for pickup!`);
+    }
+  });
+}
+
+function openOrderReadyModal(order){
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'orderReadyModalOverlay';
+  overlay.innerHTML = `
+    <div class="modal" style="border-top:6px solid #25D366; animation:bounceIn 0.35s ease;">
+      <div style="font-size:48px; margin-bottom:4px;">🍃</div>
+      <h3 style="color:var(--leaf); font-size:24px; margin:4px 0;">YOUR ORDER IS READY!</h3>
+      <p style="font-size:13.5px; color:var(--ink-soft); margin:0 0 14px;">Your fresh paan has been prepared. Please collect it from the counter.</p>
+
+      <div class="success-token-box" style="background:#e8f7ee; border:2px solid #25D366; border-radius:12px; padding:16px;">
+        <div style="font-size:12px; font-weight:700; color:#1B4332; text-transform:uppercase; letter-spacing:1px;">Token Number</div>
+        <div class="token-number-huge" style="color:var(--leaf); font-size:42px; font-family:'Rozha One',serif; margin:4px 0;">#${order.tokenNumber}</div>
+        <div style="font-weight:700; font-size:15px; margin-top:4px;">${order.itemName} × ${order.qty}</div>
+        <div style="font-size:12.5px; color:var(--ink-soft); margin-top:2px;">Total: ₹${order.price * order.qty} · ${order.customerName}</div>
+      </div>
+
+      <button class="btn-primary" style="margin-top:16px; background:var(--leaf); width:100%;" onclick="closeOrderReadyModal()">✓ OK, Collecting Now</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+function closeOrderReadyModal(){
+  const el = document.getElementById('orderReadyModalOverlay');
+  if(el) el.remove();
+}
+
+/* ----------------------------------------------------
+   CUSTOMER ORDER SUCCESS MODAL (AUTOMATIC)
 ---------------------------------------------------- */
 function openCustomerSuccessModal(order){
-  const shopPhone = settings.shopWhatsApp || '9180328338';
-  const waMessage = `Namaste Raje Paan Darbar! 🍃%0A%0AI have placed a new order from counter:%0A%0A*Token:* %23${order.tokenNumber}%0A*Customer:* ${order.customerName}%0A*Mobile:* ${order.phone}%0A*Paan:* ${order.itemName} x ${order.qty}%0A*Total:* ₹${order.price * order.qty}%0A%0APlease prepare my order. Thank you!`;
-  const waUrl = `https://api.whatsapp.com/send?phone=91${shopPhone}&text=${waMessage}`;
-
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay success-modal';
   overlay.id = 'successModalOverlay';
   overlay.innerHTML = `
     <div class="modal">
-      <div class="success-icon">🍃</div>
-      <h3 style="color:var(--leaf);">Order Placed Successfully!</h3>
-      <p class="item-sub">Your fresh paan order has been sent to the kitchen counter.</p>
+      <div class="success-icon" style="font-size:44px; margin-bottom:4px;">🍃</div>
+      <h3 style="color:var(--leaf); font-size:22px; margin:4px 0 6px;">Order Sent to Kitchen!</h3>
+      <p class="item-sub" style="margin-bottom:14px;">Your order was sent directly to the kitchen counter.</p>
 
       <div class="success-token-box">
         <div style="font-size:12px; font-weight:700; color:var(--ink-soft); text-transform:uppercase;">Your Token Number</div>
         <div class="token-number-huge">#${order.tokenNumber}</div>
-        <div style="font-weight:700; font-size:14px; margin-top:4px;">${order.itemName} × ${order.qty}</div>
-        <div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">Total: ₹${order.price * order.qty} · ${order.customerName}</div>
+        <div style="font-weight:700; font-size:15px; margin-top:4px;">${order.itemName} × ${order.qty}</div>
+        <div style="font-size:12.5px; color:var(--ink-soft); margin-top:2px;">Total: ₹${order.price * order.qty} · ${order.customerName}</div>
       </div>
 
-      <a href="${waUrl}" target="_blank" class="btn-whatsapp-large" onclick="closeSuccessModal()">
-        <span>💬 Message Shop on WhatsApp</span>
-      </a>
+      <div style="background:var(--saffron-pale); border:1.5px solid var(--saffron); border-radius:10px; padding:12px; margin:14px 0; font-size:13px; color:#784f00; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px;">
+        <span class="live-dot" style="background:var(--saffron);"></span>
+        <span>Status: <b>⏳ Preparing your fresh Paan...</b></span>
+      </div>
 
-      <button class="btn-ghost" style="width:100%; margin-top:10px;" onclick="closeSuccessModal()">Done / Track Token</button>
+      <p style="font-size:12px; color:var(--ink-soft); margin:0 0 14px; line-height:1.4;">
+        This page will <b>automatically ring a chime 🔔</b> and alert you the second your paan is ready for pickup!
+      </p>
+
+      <button class="btn-primary" style="width:100%;" onclick="closeSuccessModal()">✓ Track Live Status</button>
     </div>
   `;
   document.body.appendChild(overlay);
@@ -910,6 +979,7 @@ async function poll(){
   if(!firebaseDb){
     orders = await loadOrders();
     renderCustomerTokens();
+    checkCustomerReadyNotifications();
   }
 }
 
