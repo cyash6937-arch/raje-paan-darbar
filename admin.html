@@ -219,7 +219,7 @@
         <input type="number" min="1" step="1" id="notPickedThreshold" value="60" onchange="updateSettings()">
       </label>
       <label>📱 Shop WhatsApp
-        <input type="tel" id="shopWhatsApp" style="width:110px;" value="9876543210" onchange="updateSettings()">
+        <input type="tel" id="shopWhatsApp" style="width:110px;" value="9180328338" onchange="updateSettings()">
       </label>
       <label>🔑 Staff PIN
         <input type="text" id="staffPinInput" style="width:55px;" maxlength="4" value="1234" onchange="updateSettings()">
@@ -272,7 +272,7 @@
 
 <script>
 let orders = [];
-let settings = {pendingReminderMin:15, notPickedAlertMin:60, shopWhatsApp:'9876543210', staffPin:'1234'};
+let settings = {pendingReminderMin:15, notPickedAlertMin:60, shopWhatsApp:'9180328338', staffPin:'1234'};
 let smsLog = [];
 let knownOrderIds = new Set();
 let remindedIds = new Set();
@@ -597,8 +597,8 @@ async function saveOrders(list){
 async function loadSettings(){
   try{
     const val = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    return val ? JSON.parse(val) : {pendingReminderMin:15, notPickedAlertMin:60, shopWhatsApp:'9876543210', staffPin:'1234'};
-  }catch(e){ return {pendingReminderMin:15, notPickedAlertMin:60, shopWhatsApp:'9876543210', staffPin:'1234'}; }
+    return val ? JSON.parse(val) : {pendingReminderMin:15, notPickedAlertMin:60, shopWhatsApp:'9180328338', staffPin:'1234'};
+  }catch(e){ return {pendingReminderMin:15, notPickedAlertMin:60, shopWhatsApp:'9180328338', staffPin:'1234'}; }
 }
 async function saveSettings(s){
   try{ localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(s)); }catch(e){}
@@ -616,7 +616,7 @@ async function saveSmsLog(list){
 async function updateSettings(){
   const p = parseFloat(document.getElementById('pendingThreshold').value) || 15;
   const n = parseFloat(document.getElementById('notPickedThreshold').value) || 60;
-  const wa = document.getElementById('shopWhatsApp').value.trim() || '9876543210';
+  const wa = document.getElementById('shopWhatsApp').value.trim() || '9180328338';
   const pin = document.getElementById('staffPinInput').value.trim() || '1234';
 
   settings = {pendingReminderMin: p, notPickedAlertMin: n, shopWhatsApp: wa, staffPin: pin};
@@ -626,7 +626,7 @@ async function updateSettings(){
 function applySettingsToInputs(){
   document.getElementById('pendingThreshold').value = settings.pendingReminderMin;
   document.getElementById('notPickedThreshold').value = settings.notPickedAlertMin;
-  document.getElementById('shopWhatsApp').value = settings.shopWhatsApp || '9876543210';
+  document.getElementById('shopWhatsApp').value = settings.shopWhatsApp || '9180328338';
   document.getElementById('staffPinInput').value = settings.staffPin || '1234';
 }
 

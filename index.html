@@ -4,6 +4,29 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Raje Paan Darbar — Fresh Paan Menu & Order Counter</title>
+<meta name="description" content="Raje Paan Darbar — Family Paan Point. Browse fresh Meetha, Chocolate, Maghai, Calcutta, and Special Paan menu. Place live counter orders and get your token.">
+<meta name="keywords" content="Raje Paan Darbar, Paan Shop, Fresh Paan, Meetha Paan, Chocolate Paan, Maghai Paan, Family Paan Point, Paan Counter">
+<meta property="og:title" content="Raje Paan Darbar — Family Paan Point">
+<meta property="og:description" content="Browse fresh paan varieties, customize your order, and get live counter tokens.">
+<meta property="og:url" content="https://raje-paan-darbar.vercel.app">
+<meta property="og:type" content="restaurant">
+
+<!-- Google Search Structured Schema (JSON-LD) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Restaurant",
+  "name": "Raje Paan Darbar",
+  "description": "Family Paan Point & Live Order Counter offering authentic sweet, chocolate, maghai and specialty paans.",
+  "url": "https://raje-paan-darbar.vercel.app",
+  "hasMenu": "https://raje-paan-darbar.vercel.app",
+  "servesCuisine": "Indian Paan & Refreshments",
+  "priceRange": "₹15 - ₹100",
+  "currenciesAccepted": "INR",
+  "paymentAccepted": "Cash, UPI, Online"
+}
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Rozha+One&family=Poppins:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- Firebase App & Realtime Database SDKs -->
@@ -411,7 +434,7 @@ const FIREBASE_CONFIG_KEY = 'raje_paan_firebase_config';
 const orderChannel = 'BroadcastChannel' in window ? new BroadcastChannel('raje_paan_orders_channel') : null;
 
 let orders = [];
-let settings = { shopWhatsApp: '9876543210' };
+let settings = { shopWhatsApp: '9180328338' };
 let myTokenIds = new Set();
 let firebaseDb = null;
 let shopOpen = true;
@@ -500,8 +523,8 @@ async function saveOrders(list){
 async function loadSettings(){
   try{
     const val = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    return val ? JSON.parse(val) : { shopWhatsApp: '9876543210' };
-  }catch(e){ return { shopWhatsApp:'9876543210' }; }
+    return val ? JSON.parse(val) : { shopWhatsApp: '9180328338' };
+  }catch(e){ return { shopWhatsApp:'9180328338' }; }
 }
 
 function loadMyTokens(){
@@ -588,7 +611,7 @@ function handleItemClick(itemId){
 }
 
 function openShopClosedModal(){
-  const shopPhone = settings.shopWhatsApp || '9876543210';
+  const shopPhone = settings.shopWhatsApp || '9180328338';
   const waUrl = `https://api.whatsapp.com/send?phone=91${shopPhone}&text=Namaste%20Raje%20Paan%20Darbar!%20When%20will%20the%20counter%20open%20for%20orders%3F`;
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
@@ -785,7 +808,7 @@ async function submitOrder(){
    CUSTOMER ORDER SUCCESS & WHATSAPP TO ADMIN
 ---------------------------------------------------- */
 function openCustomerSuccessModal(order){
-  const shopPhone = settings.shopWhatsApp || '9876543210';
+  const shopPhone = settings.shopWhatsApp || '9180328338';
   const waMessage = `Namaste Raje Paan Darbar! 🍃%0A%0AI have placed a new order from counter:%0A%0A*Token:* %23${order.tokenNumber}%0A*Customer:* ${order.customerName}%0A*Mobile:* ${order.phone}%0A*Paan:* ${order.itemName} x ${order.qty}%0A*Total:* ₹${order.price * order.qty}%0A%0APlease prepare my order. Thank you!`;
   const waUrl = `https://api.whatsapp.com/send?phone=91${shopPhone}&text=${waMessage}`;
 
