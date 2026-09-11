@@ -210,7 +210,11 @@
 
 <main id="adminContent">
   <div class="admin-topbar">
-    <h2>Live Order Desk</h2>
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <h2>Live Order Desk</h2>
+      <button onclick="triggerDemoOrder()" class="sound-btn" style="background:var(--saffron); color:#1B4332; border:none; padding:7px 14px; font-weight:700; border-radius:8px; cursor:pointer;">🧪 Test Sound &amp; Alert</button>
+      <button onclick="clearAllOrders()" class="sound-btn" style="background:var(--maroon-pale); color:var(--maroon); border:1px solid var(--maroon); padding:7px 12px; font-weight:700; border-radius:8px; cursor:pointer;">🧹 Clear Orders</button>
+    </div>
     <div class="settings-panel">
       <label>⏰ Pending reminder (min)
         <input type="number" min="0.5" step="0.5" id="pendingThreshold" value="15" onchange="updateSettings()">
@@ -706,6 +710,43 @@ function triggerAdminNewOrderAlert(order){
 function dismissAdminAlert(){
   const el = document.getElementById('adminAlertOverlay');
   if(el) el.remove();
+}
+
+function triggerDemoOrder(){
+  const demoToken = Math.floor(100 + Math.random()*900);
+  const demoOrder = {
+    id: 'TOKEN-' + demoToken,
+    tokenNumber: demoToken,
+    itemId: 'choc-nut',
+    itemName: 'Chocolate Paan',
+    categoryTitle: 'Signature Specials',
+    price: 30,
+    qty: 1,
+    customerName: 'Yash (Demo Order)',
+    phone: '9180328338',
+    status: 'pending',
+    createdAt: Date.now(),
+    readyAt: null,
+    pickedAt: null
+  };
+  orders.push(demoOrder);
+  saveOrders(orders);
+  triggerAdminNewOrderAlert(demoOrder);
+  renderAdmin();
+  showToast('order', '🔔 Demo Alert Fired', `Token #${demoToken} created!`);
+}
+
+function clearAllOrders(){
+  if(confirm("Clear all orders from the screen? This resets your test orders.")){
+    orders = [];
+    knownOrderIds.clear();
+    remindedIds.clear();
+    notPickedAlertedIds.clear();
+    saveOrders([]);
+    if(firebaseDb) firebaseDb.ref('orders').remove();
+    renderAdmin();
+    showToast('order', 'Desk Cleared', 'All test orders removed.');
+  }
 }
 
 function ticketHtml(o, kind){
