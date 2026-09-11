@@ -45,9 +45,8 @@
   .brand{display:flex; align-items:center; gap:12px;}
   .brand h1{font-family:'Rozha One',serif; font-size:22px; margin:0; letter-spacing:0.5px; line-height:1.15;}
   .brand p{margin:0; font-size:11px; letter-spacing:2px; text-transform:uppercase; opacity:0.75;}
-  .leaf-badge{width:40px;height:40px; flex-shrink:0; object-fit:contain;}
 
-  .header-actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .header-actions{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
   .view-toggle{display:flex; gap:6px; background:rgba(255,255,255,0.12); padding:5px; border-radius:999px;}
   .view-toggle button{
     border:none; background:transparent; color:var(--paper); padding:8px 16px; border-radius:999px;
@@ -59,10 +58,11 @@
     background:var(--maroon); color:#fff; border-radius:999px; font-size:11px; min-width:18px; height:18px;
     display:inline-flex; align-items:center; justify-content:center; padding:0 6px; font-family:'IBM Plex Mono',monospace; font-weight:700;
   }
-  .sound-toggle-btn{
+  .sound-toggle-btn, .notify-perm-btn{
     background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.25); color:#fff; padding:7px 12px;
     border-radius:999px; font-size:12px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:5px;
   }
+  .sound-toggle-btn:hover, .notify-perm-btn:hover{background:rgba(255,255,255,0.2);}
 
   main{max-width:1050px; margin:0 auto; padding:20px 16px 80px;}
   .hint-bar{
@@ -148,8 +148,8 @@
     z-index:100; padding:16px; backdrop-filter:blur(2px);
   }
   .modal{
-    background:var(--paper); border-radius:16px; padding:26px; max-width:420px; width:100%; box-shadow:0 20px 50px rgba(0,0,0,0.3);
-    position:relative; max-height:88vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    background:var(--paper); border-radius:16px; padding:24px; max-width:420px; width:100%; box-shadow:0 20px 50px rgba(0,0,0,0.3);
+    position:relative; max-height:90vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
   }
   .modal h3{font-family:'Rozha One',serif; color:var(--leaf); font-size:22px; margin:0 0 2px;}
   .modal .item-sub{color:var(--ink-soft); font-size:13px; margin:0 0 16px;}
@@ -190,24 +190,53 @@
   }
   .field-error{color:var(--maroon); font-size:11.5px; margin-top:4px; min-height:14px;}
 
-  /* Age Modal */
-  .age-modal .modal{max-width:340px; text-align:center;}
-  .age-modal h3{font-family:'Rozha One',serif; color:var(--maroon); font-size:20px; margin:0 0 10px;}
-  .age-modal p{font-size:13.5px; color:var(--ink-soft); line-height:1.6; margin:0 0 20px;}
-  .age-actions{display:flex; gap:10px;}
-  .age-actions button{flex:1; padding:11px; border-radius:999px; font-weight:700; font-size:13.5px; cursor:pointer; border:none;}
-  .age-yes{background:var(--maroon); color:#fff;}
-  .age-no{background:var(--grey-pale); color:var(--ink-soft);}
+  /* Admin In-App Order Notification Popup */
+  .admin-order-alert-modal{
+    background:#fff; border-radius:16px; padding:24px; max-width:400px; width:100%; text-align:center;
+    box-shadow:0 25px 60px rgba(0,0,0,0.4); border-top:6px solid var(--saffron);
+    animation:bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes bounceIn{0%{transform:scale(0.8); opacity:0;} 100%{transform:scale(1); opacity:1;}}
+  .admin-alert-bell{font-size:48px; animation:ringBell 1s infinite alternate;}
+  @keyframes ringBell{0%{transform:rotate(-15deg);} 100%{transform:rotate(15deg);}}
+  .admin-alert-token{
+    background:var(--saffron-pale); border:1.5px solid var(--saffron); border-radius:10px; padding:12px; margin:14px 0;
+  }
+
+  /* Success & WhatsApp Modal */
+  .success-modal{text-align:center;}
+  .success-icon{font-size:44px; margin-bottom:8px;}
+  .success-token-box{
+    background:var(--leaf-pale); border-radius:12px; padding:16px; margin:16px 0; border:1.5px dashed var(--leaf);
+  }
+  .token-number-huge{font-family:'Rozha One',serif; font-size:36px; color:var(--leaf); margin:0;}
+  .btn-whatsapp-large{
+    background:var(--whatsapp); color:#fff; width:100%; border:none; padding:14px; border-radius:999px;
+    font-size:14px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    text-decoration:none; margin-top:10px; box-shadow:0 4px 14px rgba(37,211,102,0.35); transition:transform 0.15s;
+  }
+  .btn-whatsapp-large:hover{transform:scale(1.02); background:var(--whatsapp-dark);}
+
+  /* Security PIN Modal */
+  .pin-modal{text-align:center;}
+  .pin-input{
+    font-family:'IBM Plex Mono',monospace; font-size:28px; letter-spacing:14px; text-align:center;
+    width:200px; margin:16px auto; padding:10px; border-radius:10px; border:2px solid var(--leaf);
+  }
 
   /* Admin View */
   .admin-topbar{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:18px;}
   .admin-topbar h2{font-family:'Rozha One',serif; color:var(--leaf); font-size:26px; margin:0;}
   .settings-panel{
-    display:flex; gap:14px; align-items:center; background:var(--card); border-radius:12px; padding:10px 14px; box-shadow:var(--shadow); flex-wrap:wrap;
+    display:flex; gap:12px; align-items:center; background:var(--card); border-radius:12px; padding:10px 14px; box-shadow:var(--shadow); flex-wrap:wrap;
   }
   .settings-panel label{font-size:11px; color:var(--ink-soft); font-weight:600; display:flex; align-items:center; gap:6px;}
   .settings-panel input{
     width:56px; padding:6px 8px; border-radius:6px; border:1.5px solid var(--grey-pale); font-family:'IBM Plex Mono',monospace; font-size:13px;
+  }
+  .btn-lock{
+    background:var(--maroon-pale); color:var(--maroon); border:1px solid var(--maroon); padding:6px 12px;
+    border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;
   }
 
   .reminder-banner{
@@ -280,8 +309,6 @@
     font-family:'IBM Plex Mono',monospace;
   }
 
-  .note{font-size:11.5px; color:var(--grey); text-align:center; margin-top:30px; line-height:1.6; padding:0 10px;}
-
   /* Toasts */
   .toast-stack{position:fixed; top:80px; right:16px; z-index:200; display:flex; flex-direction:column; gap:10px; max-width:340px; pointer-events:none;}
   .toast{
@@ -338,6 +365,9 @@
     </div>
   </div>
   <div class="header-actions">
+    <button type="button" class="notify-perm-btn" id="btnNotifyPerm" onclick="requestBrowserNotification()" title="Enable pop-up notifications on screen">
+      <span>📲 Allow Alerts</span>
+    </button>
     <button type="button" class="sound-toggle-btn" id="btnSoundToggle" onclick="toggleSound()">
       <span id="soundIcon">🔔</span> <span id="soundText">Sound ON</span>
     </button>
@@ -345,8 +375,8 @@
       <button type="button" class="active" id="btnCustomerView" onclick="switchView('customer')">
         <span>🍃 Menu</span>
       </button>
-      <button type="button" id="btnAdminView" onclick="switchView('admin')">
-        <span>🧾 Admin Desk</span>
+      <button type="button" id="btnAdminView" onclick="handleAdminViewClick()">
+        <span>🔒 Admin Desk</span>
         <span class="badge-count" id="adminActiveBadge" style="display:none;">0</span>
       </button>
     </div>
@@ -356,7 +386,7 @@
 <main>
   <!-- CUSTOMER VIEW -->
   <section id="customerView">
-    <p class="hint-bar">Enter your name and mobile number. When your paan is ready, you'll receive your Token notification!</p>
+    <p class="hint-bar">Place your order below to get your Token Number &amp; optionally send a WhatsApp message to the shop!</p>
     
     <!-- Customer Active Orders Status Bar -->
     <div class="customer-status-bar" id="custStatusBar" style="display:none;">
@@ -376,7 +406,7 @@
     <div id="menuCategories"></div>
   </section>
 
-  <!-- ADMIN VIEW -->
+  <!-- ADMIN VIEW (PROTECTED BY SECRET PIN) -->
   <section id="adminView" style="display:none;">
     <div class="admin-topbar">
       <h2>Live Order Desk</h2>
@@ -387,6 +417,13 @@
         <label>📦 Not-picked alert (min)
           <input type="number" min="1" step="1" id="notPickedThreshold" value="60" onchange="updateSettings()">
         </label>
+        <label>📱 Shop WhatsApp
+          <input type="tel" id="shopWhatsApp" style="width:110px;" value="9876543210" onchange="updateSettings()">
+        </label>
+        <label>🔑 Staff PIN
+          <input type="text" id="staffPinInput" style="width:55px;" maxlength="4" value="1234" onchange="updateSettings()">
+        </label>
+        <button class="btn-lock" onclick="lockAdmin()">🔒 Lock Desk</button>
       </div>
     </div>
 
@@ -530,19 +567,25 @@ CATEGORIES.forEach(cat => cat.items.forEach(it => {
 }));
 
 /* ----------------------------------------------------
-   STORAGE & STATE
+   STORAGE & REALTIME SYNC
 ---------------------------------------------------- */
 const ORDER_STORAGE_KEY = 'raje_paan_orders';
 const SETTINGS_STORAGE_KEY = 'raje_paan_settings';
 const SMS_STORAGE_KEY = 'raje_paan_sms_log';
 const MY_TOKENS_KEY = 'raje_paan_my_tokens';
 const TOKEN_COUNTER_KEY = 'raje_paan_token_seq';
+const ADMIN_AUTH_KEY = 'raje_paan_admin_auth';
 
 const orderChannel = 'BroadcastChannel' in window ? new BroadcastChannel('raje_paan_orders_channel') : null;
 
 let currentView = 'customer';
 let orders = [];
-let settings = {pendingReminderMin: 15, notPickedAlertMin: 60};
+let settings = {
+  pendingReminderMin: 15, 
+  notPickedAlertMin: 60,
+  shopWhatsApp: '9876543210',
+  staffPin: '1234'
+};
 let smsLog = [];
 let knownOrderIds = new Set();
 let remindedIds = new Set();
@@ -551,7 +594,7 @@ let myTokenIds = new Set();
 let initialised = false;
 let soundEnabled = true;
 
-/* Web Audio Chime */
+/* 🔔 Web Audio Chime Sound System */
 function playBellSound(type = 'order'){
   if(!soundEnabled) return;
   try{
@@ -561,31 +604,28 @@ function playBellSound(type = 'order'){
     const now = ctx.currentTime;
     
     if(type === 'order'){
-      // Two-tone bell for new incoming order
-      const osc1 = ctx.createOscillator();
-      const osc2 = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc1.type = 'sine';
-      osc2.type = 'sine';
-      osc1.frequency.setValueAtTime(587.33, now); // D5
-      osc2.frequency.setValueAtTime(880, now + 0.15); // A5
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
-      osc1.connect(gain);
-      osc2.connect(gain);
-      gain.connect(ctx.destination);
-      osc1.start(now);
-      osc1.stop(now + 0.15);
-      osc2.start(now + 0.15);
-      osc2.stop(now + 0.8);
+      // 3-tone pleasant kitchen order chime: G5 -> C6 -> E6
+      const tones = [783.99, 1046.50, 1318.51];
+      tones.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + (idx * 0.14));
+        gain.gain.setValueAtTime(0.35, now + (idx * 0.14));
+        gain.gain.exponentialRampToValueAtTime(0.001, now + (idx * 0.14) + 0.5);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + (idx * 0.14));
+        osc.stop(now + (idx * 0.14) + 0.5);
+      });
     } else {
-      // Ready chime
+      // Ready chime: E5 -> A5
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'triangle';
-      osc.frequency.setValueAtTime(659.25, now); // E5
-      osc.frequency.setValueAtTime(1046.50, now + 0.12); // C6
-      gain.gain.setValueAtTime(0.25, now);
+      osc.frequency.setValueAtTime(659.25, now);
+      osc.frequency.setValueAtTime(880.00, now + 0.15);
+      gain.gain.setValueAtTime(0.3, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
       osc.connect(gain);
       gain.connect(ctx.destination);
@@ -601,6 +641,50 @@ function toggleSound(){
   document.getElementById('soundText').textContent = soundEnabled ? 'Sound ON' : 'Sound OFF';
   if(soundEnabled) playBellSound('order');
 }
+
+/* 📲 Browser Desktop Push Notification */
+function requestBrowserNotification(){
+  if('Notification' in window){
+    Notification.requestPermission().then(permission => {
+      if(permission === 'granted'){
+        showToast('order', 'Notifications Enabled', 'You will receive pop-up alerts when new orders arrive!');
+        new Notification("🍃 Raje Paan Darbar Alerts", {
+          body: "Order notifications are now active on your device!",
+          icon: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><text y='50' font-size='48'>🍃</text></svg>"
+        });
+      }
+    });
+  }
+}
+
+function sendBrowserNotification(title, bodyText){
+  if('Notification' in window && Notification.permission === 'granted'){
+    try{
+      new Notification(title, {
+        body: bodyText,
+        icon: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><text y='50' font-size='48'>🔔</text></svg>"
+      });
+    }catch(e){}
+  }
+}
+
+/* Title Flashing when new order arrives */
+let titleInterval = null;
+function flashTabTitle(msg){
+  if(titleInterval) clearInterval(titleInterval);
+  let state = false;
+  titleInterval = setInterval(()=>{
+    document.title = state ? `🔔 (NEW ORDER!) Raje Paan Darbar` : `🍃 Raje Paan Darbar`;
+    state = !state;
+  }, 1000);
+}
+window.addEventListener('focus', ()=>{
+  if(titleInterval){
+    clearInterval(titleInterval);
+    titleInterval = null;
+    document.title = "Raje Paan Darbar — Order Counter & Admin Desk";
+  }
+});
 
 /* Local storage helpers */
 async function loadOrders(){
@@ -618,8 +702,13 @@ async function saveOrders(list){
 async function loadSettings(){
   try{
     const val = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    return val ? JSON.parse(val) : {pendingReminderMin:15, notPickedAlertMin:60};
-  }catch(e){ return {pendingReminderMin:15, notPickedAlertMin:60}; }
+    return val ? JSON.parse(val) : {
+      pendingReminderMin: 15, 
+      notPickedAlertMin: 60,
+      shopWhatsApp: '9876543210',
+      staffPin: '1234'
+    };
+  }catch(e){ return {pendingReminderMin:15, notPickedAlertMin:60, shopWhatsApp:'9876543210', staffPin:'1234'}; }
 }
 async function saveSettings(s){
   try{ localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(s)); }catch(e){}
@@ -651,7 +740,71 @@ function getNextTokenNumber(){
   }catch(e){ return Math.floor(100 + Math.random()*900); }
 }
 
-/* View Switcher */
+/* ----------------------------------------------------
+   STAFF 4-DIGIT PIN SECURITY & VIEW SWITCHER
+---------------------------------------------------- */
+function handleAdminViewClick(){
+  const isAuth = sessionStorage.getItem(ADMIN_AUTH_KEY) === 'true';
+  if(isAuth){
+    switchView('admin');
+  } else {
+    openPinModal();
+  }
+}
+
+function openPinModal(){
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay pin-modal';
+  overlay.id = 'pinModalOverlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <h3>🔑 Staff Security PIN</h3>
+      <p class="item-sub">Enter the 4-digit staff PIN to unlock the live kitchen desk.</p>
+      
+      <input type="password" id="enteredPin" class="pin-input" maxlength="4" placeholder="••••" inputmode="numeric" pattern="[0-9]*" autofocus onkeydown="if(event.key==='Enter') verifyPin()">
+      <div class="field-error" id="pinError"></div>
+
+      <div class="modal-actions" style="margin-top:14px;">
+        <button class="btn-ghost" onclick="closePinModal()">Cancel</button>
+        <button class="btn-primary" onclick="verifyPin()">Unlock Admin Desk</button>
+      </div>
+      <p style="font-size:11.5px; color:var(--grey); margin-top:14px;">Default Staff PIN: <b>1234</b> (Changeable in settings)</p>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closePinModal(); });
+  setTimeout(()=>document.getElementById('enteredPin')?.focus(), 100);
+}
+
+function closePinModal(){
+  const el = document.getElementById('pinModalOverlay');
+  if(el) el.remove();
+}
+
+function verifyPin(){
+  const input = document.getElementById('enteredPin');
+  const err = document.getElementById('pinError');
+  const expectedPin = settings.staffPin || '1234';
+
+  if(input.value === expectedPin){
+    sessionStorage.setItem(ADMIN_AUTH_KEY, 'true');
+    closePinModal();
+    playBellSound('ready');
+    showToast('order', 'Admin Unlocked', 'Welcome to the Live Kitchen Order Desk.');
+    switchView('admin');
+  } else {
+    err.textContent = '❌ Incorrect PIN. Please try again.';
+    input.value = '';
+    input.focus();
+  }
+}
+
+function lockAdmin(){
+  sessionStorage.removeItem(ADMIN_AUTH_KEY);
+  showToast('alert', 'Admin Locked', 'Staff session locked.');
+  switchView('customer');
+}
+
 function switchView(view){
   currentView = view;
   const custSec = document.getElementById('customerView');
@@ -664,12 +817,14 @@ function switchView(view){
     adminSec.style.display = 'none';
     btnCust.classList.add('active');
     btnAdmin.classList.remove('active');
+    btnAdmin.innerHTML = `<span>🔒 Admin Desk</span><span class="badge-count" id="adminActiveBadge" style="display:${orders.filter(o=>o.status==='pending').length>0?'inline-flex':'none'};">${orders.filter(o=>o.status==='pending').length}</span>`;
     renderCustomerTokens();
   } else {
     custSec.style.display = 'none';
     adminSec.style.display = 'block';
     btnAdmin.classList.add('active');
     btnCust.classList.remove('active');
+    btnAdmin.innerHTML = `<span>🔓 Admin Desk</span><span class="badge-count" id="adminActiveBadge" style="display:${orders.filter(o=>o.status==='pending').length>0?'inline-flex':'none'};">${orders.filter(o=>o.status==='pending').length}</span>`;
     renderAdmin();
   }
 }
@@ -888,11 +1043,90 @@ async function submitOrder(){
 
   closeModal();
   playBellSound('order');
-  showToast('order', 'Order Placed!', `Token #${newOrder.tokenNumber}: ${newOrder.itemName} for ${newOrder.customerName} (${newOrder.phone}).`);
-  
+
+  // Open Order Success / WhatsApp Message to Shop Modal
+  openCustomerSuccessModal(newOrder);
+
   orders = current;
   renderCustomerTokens();
   updateAdminBadge();
+}
+
+/* ----------------------------------------------------
+   CUSTOMER ORDER SUCCESS & WHATSAPP TO ADMIN
+---------------------------------------------------- */
+function openCustomerSuccessModal(order){
+  const shopPhone = settings.shopWhatsApp || '9876543210';
+  const waMessage = `Namaste Raje Paan Darbar! 🍃%0A%0AI have placed a new order from counter:%0A%0A*Token:* %23${order.tokenNumber}%0A*Customer:* ${order.customerName}%0A*Mobile:* ${order.phone}%0A*Paan:* ${order.itemName} x ${order.qty}%0A*Total:* ₹${order.price * order.qty}%0A%0APlease prepare my order. Thank you!`;
+  const waUrl = `https://api.whatsapp.com/send?phone=91${shopPhone}&text=${waMessage}`;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay success-modal';
+  overlay.id = 'successModalOverlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="success-icon">🍃</div>
+      <h3 style="color:var(--leaf);">Order Placed Successfully!</h3>
+      <p class="item-sub">Your fresh paan order has been sent to the kitchen counter.</p>
+
+      <div class="success-token-box">
+        <div style="font-size:12px; font-weight:700; color:var(--ink-soft); text-transform:uppercase;">Your Token Number</div>
+        <div class="token-number-huge">#${order.tokenNumber}</div>
+        <div style="font-weight:700; font-size:14px; margin-top:4px;">${order.itemName} × ${order.qty}</div>
+        <div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">Total: ₹${order.price * order.qty} · ${order.customerName}</div>
+      </div>
+
+      <a href="${waUrl}" target="_blank" class="btn-whatsapp-large" onclick="closeSuccessModal()">
+        <span>💬 Message Admin on WhatsApp</span>
+      </a>
+
+      <button class="btn-ghost" style="width:100%; margin-top:10px;" onclick="closeSuccessModal()">Done / Track Token</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeSuccessModal(); });
+}
+
+function closeSuccessModal(){
+  const el = document.getElementById('successModalOverlay');
+  if(el) el.remove();
+}
+
+/* ----------------------------------------------------
+   ADMIN NEW INCOMING ORDER POPUP ALERT
+---------------------------------------------------- */
+function triggerAdminNewOrderAlert(order){
+  playBellSound('order');
+  sendBrowserNotification(`🔔 New Paan Order! Token #${order.tokenNumber}`, `${order.customerName} (${order.phone}) ordered ${order.itemName} × ${order.qty}`);
+  flashTabTitle();
+
+  if(currentView === 'admin'){
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'adminAlertOverlay';
+    overlay.innerHTML = `
+      <div class="admin-order-alert-modal">
+        <div class="admin-alert-bell">🔔</div>
+        <h3 style="color:var(--leaf); margin:6px 0 2px;">NEW ORDER RECEIVED!</h3>
+        <p style="font-size:13px; color:var(--ink-soft); margin:0;">A new counter order is waiting for preparation.</p>
+
+        <div class="admin-alert-token">
+          <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#855800;">Token Number</div>
+          <div style="font-family:'Rozha One',serif; font-size:32px; color:var(--leaf); margin:2px 0;">#${order.tokenNumber}</div>
+          <div style="font-weight:700; font-size:14px;">${order.itemName} × ${order.qty}</div>
+          <div style="font-size:12.5px; color:var(--ink); margin-top:4px;">Customer: <b>${order.customerName}</b> (📞 ${order.phone})</div>
+        </div>
+
+        <button class="btn-primary" style="width:100%;" onclick="dismissAdminAlert()">✓ View &amp; Prepare Order</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  }
+}
+
+function dismissAdminAlert(){
+  const el = document.getElementById('adminAlertOverlay');
+  if(el) el.remove();
 }
 
 /* ----------------------------------------------------
@@ -973,14 +1207,25 @@ async function markPicked(orderId){
 async function updateSettings(){
   const p = parseFloat(document.getElementById('pendingThreshold').value) || 15;
   const n = parseFloat(document.getElementById('notPickedThreshold').value) || 60;
-  settings = {pendingReminderMin: p, notPickedAlertMin: n};
+  const wa = document.getElementById('shopWhatsApp').value.trim() || '9876543210';
+  const pin = document.getElementById('staffPinInput').value.trim() || '1234';
+
+  settings = {
+    pendingReminderMin: p, 
+    notPickedAlertMin: n,
+    shopWhatsApp: wa,
+    staffPin: pin
+  };
   await saveSettings(settings);
+  showToast('order', 'Settings Saved', 'Kitchen timers, shop WhatsApp & staff PIN updated.');
 }
 
 function applySettingsToInputs(){
   if(document.getElementById('pendingThreshold')){
     document.getElementById('pendingThreshold').value = settings.pendingReminderMin;
     document.getElementById('notPickedThreshold').value = settings.notPickedAlertMin;
+    document.getElementById('shopWhatsApp').value = settings.shopWhatsApp || '9876543210';
+    document.getElementById('staffPinInput').value = settings.staffPin || '1234';
   }
 }
 
@@ -1085,11 +1330,13 @@ function renderAdmin(){
 function updateAdminBadge(){
   const pendingCount = orders.filter(o => o.status === 'pending').length;
   const badge = document.getElementById('adminActiveBadge');
-  if(pendingCount > 0){
-    badge.style.display = 'inline-flex';
-    badge.textContent = pendingCount;
-  } else {
-    badge.style.display = 'none';
+  if(badge){
+    if(pendingCount > 0){
+      badge.style.display = 'inline-flex';
+      badge.textContent = pendingCount;
+    } else {
+      badge.style.display = 'none';
+    }
   }
 }
 
@@ -1143,17 +1390,21 @@ async function tick(){
 
 async function poll(){
   const fresh = await loadOrders();
-  let hasNew = false;
+  let latestNewOrder = null;
+
   fresh.forEach(o => {
     if(!knownOrderIds.has(o.id)){
       knownOrderIds.add(o.id);
       if(initialised){
-        hasNew = true;
-        showToast('order', 'New Order Received!', `Token #${o.tokenNumber}: ${o.customerName} (${o.phone}) - ${o.itemName} × ${o.qty}.`);
+        latestNewOrder = o;
       }
     }
   });
-  if(hasNew) playBellSound('order');
+
+  if(latestNewOrder){
+    triggerAdminNewOrderAlert(latestNewOrder);
+  }
+
   orders = fresh;
 
   const freshSettings = await loadSettings();
