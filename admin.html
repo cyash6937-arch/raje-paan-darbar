@@ -6,6 +6,9 @@
 <title>Raje Paan Darbar — Admin Kitchen & Order Desk</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Rozha+One&family=Poppins:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Firebase App & Realtime Database SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
   :root{
     --paper:#FBF3E3;
@@ -50,11 +53,12 @@
     background:var(--maroon); color:#fff; border-radius:999px; font-size:11px; min-width:18px; height:18px;
     display:inline-flex; align-items:center; justify-content:center; padding:0 6px; font-family:'IBM Plex Mono',monospace; font-weight:700;
   }
-  .sound-btn, .notify-perm-btn{
+  .sound-btn, .notify-perm-btn, .cloud-btn{
     background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.25); color:#fff; padding:7px 12px;
     border-radius:999px; font-size:12px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:5px;
   }
-  .sound-btn:hover, .notify-perm-btn:hover{background:rgba(255,255,255,0.2);}
+  .sound-btn:hover, .notify-perm-btn:hover, .cloud-btn:hover{background:rgba(255,255,255,0.2);}
+  .cloud-btn.synced{border-color:#25D366; color:#9ff0b8;}
   .btn-lock{
     background:var(--maroon-pale); color:var(--maroon); border:1px solid var(--maroon); padding:6px 12px;
     border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;
@@ -147,7 +151,7 @@
     z-index:100; padding:16px; backdrop-filter:blur(3px);
   }
   .modal{
-    background:var(--paper); border-radius:16px; padding:26px; max-width:400px; width:100%; box-shadow:0 20px 50px rgba(0,0,0,0.3);
+    background:var(--paper); border-radius:16px; padding:26px; max-width:440px; width:100%; box-shadow:0 20px 50px rgba(0,0,0,0.3);
     position:relative; text-align:center;
   }
   .pin-input{
@@ -196,6 +200,7 @@
     </div>
   </div>
   <div class="header-actions">
+    <button class="cloud-btn" id="btnCloudStatus" onclick="openCloudModal()"><span>☁️ Cloud DB</span></button>
     <button class="notify-perm-btn" onclick="requestBrowserNotification()"><span>📲 Push Alerts</span></button>
     <button class="sound-btn" id="btnSoundToggle" onclick="toggleSound()">🔔 Sound ON</button>
     <button class="btn-lock" onclick="lockAdmin()">🔒 Lock</button>
@@ -273,14 +278,144 @@ let remindedIds = new Set();
 let notPickedAlertedIds = new Set();
 let initialised = false;
 let soundEnabled = true;
+let firebaseDb = null;
 
 const ORDER_STORAGE_KEY = 'raje_paan_orders';
 const SETTINGS_STORAGE_KEY = 'raje_paan_settings';
 const SMS_STORAGE_KEY = 'raje_paan_sms_log';
 const ADMIN_AUTH_KEY = 'raje_paan_admin_auth_page';
+const FIREBASE_CONFIG_KEY = 'raje_paan_firebase_config';
 const orderChannel = 'BroadcastChannel' in window ? new BroadcastChannel('raje_paan_orders_channel') : null;
 
-/* Sound system */
+// Global Firebase Config
+const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAsEZZ5cz-xsCB8_xxRQjL5vEvAc32i6q4",
+  authDomain: "raje-paan-darbar.firebaseapp.com",
+  databaseURL: "https://raje-paan-darbar-default-rtdb.firebaseio.com",
+  projectId: "raje-paan-darbar",
+  storageBucket: "raje-paan-darbar.firebasestorage.app",
+  messagingSenderId: "9964068683",
+  appId: "1:9964068683:web:46411a1e35bae6916f12ce",
+  measurementId: "G-7MXDE07Y3Q"
+};
+
+/* ----------------------------------------------------
+   FIREBASE REALTIME CLOUD SYNC
+---------------------------------------------------- */
+function initFirebaseCloud(){
+  try{
+    const savedConfig = localStorage.getItem(FIREBASE_CONFIG_KEY) || (DEFAULT_FIREBASE_CONFIG ? JSON.stringify(DEFAULT_FIREBASE_CONFIG) : null);
+    if(savedConfig){
+      const cfg = typeof savedConfig === 'string' ? JSON.parse(savedConfig) : savedConfig;
+      if(cfg && cfg.apiKey && (cfg.databaseURL || cfg.projectId)){
+        if(!firebase.apps.length){
+          firebase.initializeApp(cfg);
+        }
+        firebaseDb = firebase.database();
+        updateCloudStatusBadge(true);
+
+        // Realtime listener for cross-device live orders
+        firebaseDb.ref('orders').on('value', (snapshot) => {
+          const val = snapshot.val();
+          if(val){
+            const list = Object.values(val);
+            let latestNewOrder = null;
+
+            list.forEach(o => {
+              if(!knownOrderIds.has(o.id)){
+                knownOrderIds.add(o.id);
+                if(initialised && o.status === 'pending'){
+                  latestNewOrder = o;
+                }
+              }
+            });
+
+            orders = list;
+            localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(list));
+            renderAdmin();
+
+            if(latestNewOrder){
+              triggerAdminNewOrderAlert(latestNewOrder);
+            }
+          }
+        });
+        return;
+      }
+    }
+    updateCloudStatusBadge(false);
+  }catch(e){
+    console.warn("Cloud DB running in local mode", e);
+    updateCloudStatusBadge(false);
+  }
+}
+
+function updateCloudStatusBadge(isOnline){
+  const btn = document.getElementById('btnCloudStatus');
+  if(!btn) return;
+  if(isOnline){
+    btn.innerHTML = `<span>🟢 Cloud Live</span>`;
+    btn.classList.add('synced');
+  } else {
+    btn.innerHTML = `<span>☁️ Connect Cloud</span>`;
+    btn.classList.remove('synced');
+  }
+}
+
+function openCloudModal(){
+  const saved = localStorage.getItem(FIREBASE_CONFIG_KEY) || '';
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'cloudModalOverlay';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:480px; text-align:left;">
+      <h3 style="color:var(--leaf); margin:0 0 6px;">☁️ Free Realtime Cloud Sync</h3>
+      <p style="font-size:12.5px; color:var(--ink-soft); margin:0 0 14px;">
+        Connect your free Firebase Database so orders from any customer mobile phone appear instantly on this desk with sound.
+      </p>
+
+      <label style="font-size:12px; font-weight:700; color:var(--ink-soft);">Firebase Config (JSON format):</label>
+      <textarea id="firebaseConfigInput" style="width:100%; height:110px; font-family:'IBM Plex Mono',monospace; font-size:11.5px; padding:8px; border-radius:8px; border:1.5px solid var(--grey-pale); margin-top:4px;" placeholder='{\n  "apiKey": "...",\n  "authDomain": "...",\n  "databaseURL": "https://...",\n  "projectId": "..."\n}'>${saved}</textarea>
+      
+      <div style="display:flex; gap:8px; margin-top:14px;">
+        <button class="btn-primary" style="flex:1;" onclick="saveCloudConfig()">Save &amp; Connect</button>
+        <button class="btn-lock" style="padding:10px 16px;" onclick="closeCloudModal()">Close</button>
+      </div>
+      <p style="font-size:11px; color:var(--grey); margin-top:10px; text-align:center;">
+        Status: <b>${firebaseDb ? '🟢 Connected to Cloud' : '🟡 Local Mode (Same device only)'}</b>
+      </p>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+function closeCloudModal(){
+  const el = document.getElementById('cloudModalOverlay');
+  if(el) el.remove();
+}
+
+function saveCloudConfig(){
+  const raw = document.getElementById('firebaseConfigInput').value.trim();
+  if(!raw){
+    localStorage.removeItem(FIREBASE_CONFIG_KEY);
+    showToast('alert', 'Cloud Disconnected', 'Switched to local offline mode.');
+    closeCloudModal();
+    updateCloudStatusBadge(false);
+    return;
+  }
+  try{
+    const parsed = JSON.parse(raw);
+    localStorage.setItem(FIREBASE_CONFIG_KEY, JSON.stringify(parsed));
+    showToast('order', 'Cloud Config Saved', 'Reloading connection...');
+    closeCloudModal();
+    setTimeout(()=>location.reload(), 600);
+  }catch(e){
+    alert("Invalid JSON format. Please paste the valid Firebase config object.");
+  }
+}
+
+/* ----------------------------------------------------
+   AUDIO CHIME SYSTEM (Web Audio API)
+---------------------------------------------------- */
 function playBellSound(type = 'order'){
   if(!soundEnabled) return;
   try{
@@ -342,7 +477,9 @@ function sendBrowserNotification(title, bodyText){
   }
 }
 
-/* Security PIN */
+/* ----------------------------------------------------
+   STAFF SECURITY PIN
+---------------------------------------------------- */
 function checkAuth(){
   const isAuth = sessionStorage.getItem(ADMIN_AUTH_KEY) === 'true';
   if(!isAuth) openPinModal();
@@ -391,6 +528,9 @@ function lockAdmin(){
   openPinModal();
 }
 
+/* ----------------------------------------------------
+   DATA & PERSISTENCE
+---------------------------------------------------- */
 async function loadOrders(){
   try{
     const val = localStorage.getItem(ORDER_STORAGE_KEY);
@@ -401,6 +541,11 @@ async function saveOrders(list){
   try{
     localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(list));
     if(orderChannel) orderChannel.postMessage({type:'orders-updated'});
+    if(firebaseDb){
+      const ordersObj = {};
+      list.forEach(o => { ordersObj[o.id] = o; });
+      firebaseDb.ref('orders').set(ordersObj);
+    }
   }catch(e){}
 }
 async function loadSettings(){
@@ -629,28 +774,29 @@ async function tick(){
 }
 
 async function poll(){
-  const fresh = await loadOrders();
-  let latestNewOrder = null;
-  fresh.forEach(o => {
-    if(!knownOrderIds.has(o.id)){
-      knownOrderIds.add(o.id);
-      if(initialised){
-        latestNewOrder = o;
+  if(!firebaseDb){
+    const fresh = await loadOrders();
+    let latestNewOrder = null;
+    fresh.forEach(o => {
+      if(!knownOrderIds.has(o.id)){
+        knownOrderIds.add(o.id);
+        if(initialised){
+          latestNewOrder = o;
+        }
       }
-    }
-  });
-  if(latestNewOrder) triggerAdminNewOrderAlert(latestNewOrder);
-  orders = fresh;
+    });
+    if(latestNewOrder) triggerAdminNewOrderAlert(latestNewOrder);
+    orders = fresh;
 
-  const freshSettings = await loadSettings();
-  settings = freshSettings;
-  applySettingsToInputs();
+    const freshSettings = await loadSettings();
+    settings = freshSettings;
+    applySettingsToInputs();
 
-  const freshSms = await loadSmsLog();
-  smsLog = freshSms;
+    const freshSms = await loadSmsLog();
+    smsLog = freshSms;
 
-  renderAdmin();
-  initialised = true;
+    renderAdmin();
+  }
 }
 
 window.addEventListener('storage', (event) => {
@@ -667,11 +813,12 @@ async function init(){
   settings = await loadSettings();
   applySettingsToInputs();
   smsLog = await loadSmsLog();
+  initFirebaseCloud();
   renderAdmin();
   initialised = true;
 
   setInterval(tick, 5000);
-  setInterval(poll, 1200);
+  setInterval(poll, 1500);
 }
 
 init();

@@ -6,6 +6,9 @@
 <title>Raje Paan Darbar — Fresh Paan Menu & Order Counter</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Rozha+One&family=Poppins:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Firebase App & Realtime Database SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
   :root{
     --paper:#FBF3E3;
@@ -48,8 +51,10 @@
 
   .shop-tagline-badge{
     background:rgba(255,255,255,0.12); color:#F8E9C7; padding:6px 14px; border-radius:999px;
-    font-size:12px; font-weight:600; letter-spacing:1px;
+    font-size:12px; font-weight:600; letter-spacing:1px; display:inline-flex; align-items:center; gap:6px;
   }
+  .live-dot{width:8px; height:8px; border-radius:50%; background:#25D366; animation:pulseDot 1.5s infinite;}
+  @keyframes pulseDot{0%,100%{opacity:1; transform:scale(1);} 50%{opacity:0.4; transform:scale(0.8);}}
 
   main{max-width:1050px; margin:0 auto; padding:20px 16px 80px;}
   .hint-bar{
@@ -253,7 +258,8 @@
     </div>
   </div>
   <div class="shop-tagline-badge">
-    <span>🌿 Live Order Counter</span>
+    <span class="live-dot"></span>
+    <span>Live Ordering Active</span>
   </div>
 </header>
 
@@ -379,52 +385,99 @@ CATEGORIES.forEach(cat => cat.items.forEach(it => {
 }));
 
 /* ----------------------------------------------------
-   STORAGE & REALTIME SYNC
+   STORAGE & REALTIME CLOUD SYNC (FIREBASE + LOCAL)
 ---------------------------------------------------- */
 const ORDER_STORAGE_KEY = 'raje_paan_orders';
 const SETTINGS_STORAGE_KEY = 'raje_paan_settings';
 const MY_TOKENS_KEY = 'raje_paan_my_tokens';
 const TOKEN_COUNTER_KEY = 'raje_paan_token_seq';
+const FIREBASE_CONFIG_KEY = 'raje_paan_firebase_config';
 
 const orderChannel = 'BroadcastChannel' in window ? new BroadcastChannel('raje_paan_orders_channel') : null;
 
 let orders = [];
-let settings = {
-  shopWhatsApp: '9876543210'
-};
+let settings = { shopWhatsApp: '9876543210' };
 let myTokenIds = new Set();
+let firebaseDb = null;
 
-/* Local storage helpers */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAsEZZ5cz-xsCB8_xxRQjL5vEvAc32i6q4",
+  authDomain: "raje-paan-darbar.firebaseapp.com",
+  databaseURL: "https://raje-paan-darbar-default-rtdb.firebaseio.com",
+  projectId: "raje-paan-darbar",
+  storageBucket: "raje-paan-darbar.firebasestorage.app",
+  messagingSenderId: "9964068683",
+  appId: "1:9964068683:web:46411a1e35bae6916f12ce",
+  measurementId: "G-7MXDE07Y3Q"
+};
+
+/* Initialize Realtime Cloud Database */
+function initFirebaseCloud(){
+  try{
+    if(typeof firebase !== 'undefined' && FIREBASE_CONFIG.apiKey){
+      if(!firebase.apps.length){
+        firebase.initializeApp(FIREBASE_CONFIG);
+      }
+      firebaseDb = firebase.database();
+      // Listen to real-time cloud updates
+      firebaseDb.ref('orders').on('value', (snapshot) => {
+        const val = snapshot.val();
+        if(val){
+          const list = Object.values(val);
+          orders = list;
+          localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(list));
+          renderCustomerTokens();
+        }
+      });
+    }
+  }catch(e){ console.warn("Cloud sync running in local mode", e); }
+}
+
 async function loadOrders(){
   try{
     const val = localStorage.getItem(ORDER_STORAGE_KEY);
     return val ? JSON.parse(val) : [];
   }catch(e){ return []; }
 }
+
 async function saveOrders(list){
   try{
     localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(list));
     if(orderChannel) orderChannel.postMessage({type:'orders-updated', count: list.length});
+    // Cloud push if active
+    if(firebaseDb){
+      const ordersObj = {};
+      list.forEach(o => { ordersObj[o.id] = o; });
+      firebaseDb.ref('orders').set(ordersObj);
+    }
   }catch(e){}
 }
+
 async function loadSettings(){
   try{
     const val = localStorage.getItem(SETTINGS_STORAGE_KEY);
     return val ? JSON.parse(val) : { shopWhatsApp: '9876543210' };
   }catch(e){ return { shopWhatsApp:'9876543210' }; }
 }
+
 function loadMyTokens(){
   try{
     const val = localStorage.getItem(MY_TOKENS_KEY);
     return val ? new Set(JSON.parse(val)) : new Set();
   }catch(e){ return new Set(); }
 }
+
 function saveMyTokens(setObj){
   try{ localStorage.setItem(MY_TOKENS_KEY, JSON.stringify(Array.from(setObj))); }catch(e){}
 }
+
 function getNextTokenNumber(){
   try{
     let cur = parseInt(localStorage.getItem(TOKEN_COUNTER_KEY) || '100');
+    if(orders && orders.length > 0){
+      const maxExisting = Math.max(...orders.map(o => parseInt(o.tokenNumber) || 100));
+      if(maxExisting >= cur) cur = maxExisting;
+    }
     cur += 1;
     localStorage.setItem(TOKEN_COUNTER_KEY, cur.toString());
     return cur;
@@ -755,8 +808,10 @@ function showToast(type, title, message){
 }
 
 async function poll(){
-  orders = await loadOrders();
-  renderCustomerTokens();
+  if(!firebaseDb){
+    orders = await loadOrders();
+    renderCustomerTokens();
+  }
 }
 
 window.addEventListener('storage', (event) => {
@@ -780,6 +835,7 @@ async function init(){
   myTokenIds = loadMyTokens();
   orders = await loadOrders();
   settings = await loadSettings();
+  initFirebaseCloud();
   renderCustomerTokens();
   setInterval(poll, 1500);
 }
