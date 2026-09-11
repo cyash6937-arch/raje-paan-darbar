@@ -433,11 +433,13 @@ const FIREBASE_CONFIG_KEY = 'raje_paan_firebase_config';
 
 const orderChannel = 'BroadcastChannel' in window ? new BroadcastChannel('raje_paan_orders_channel') : null;
 
+const SHOP_OPEN_STORAGE_KEY = 'raje_paan_shop_open';
+
 let orders = [];
 let settings = { shopWhatsApp: '9180328338' };
 let myTokenIds = new Set();
 let firebaseDb = null;
-let shopOpen = true;
+let shopOpen = localStorage.getItem(SHOP_OPEN_STORAGE_KEY) !== 'false';
 
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyAsEZZ5cz-xsCB8_xxRQjL5vEvAc32i6q4",
@@ -475,6 +477,7 @@ function initFirebaseCloud(){
         const val = snapshot.val();
         if(val !== null){
           shopOpen = typeof val === 'object' ? (val.isOpen !== false) : (val === true || val === 'open');
+          localStorage.setItem(SHOP_OPEN_STORAGE_KEY, shopOpen ? 'true' : 'false');
           updateShopOpenUI();
         }
       });
@@ -488,17 +491,32 @@ function updateShopOpenUI(){
   if(badge){
     if(shopOpen){
       badge.innerHTML = '<span class="live-dot"></span> <span>Live Ordering Active</span>';
-      badge.style.background = 'rgba(255,255,255,0.12)';
+      badge.style.background = 'rgba(255,255,255,0.15)';
       badge.style.color = '#F8E9C7';
     } else {
-      badge.innerHTML = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff4d4f;margin-right:6px;"></span> <span>Shop Closed</span>';
-      badge.style.background = 'rgba(255,77,79,0.2)';
+      badge.innerHTML = '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#ff4d4f;margin-right:6px;box-shadow:0 0 8px #ff4d4f;"></span> <span>🔴 SHOP CLOSED</span>';
+      badge.style.background = 'rgba(255,77,79,0.3)';
       badge.style.color = '#ff9999';
     }
   }
   if(banner){
     banner.style.display = shopOpen ? 'none' : 'block';
   }
+  document.querySelectorAll('.row-order-btn').forEach(btn => {
+    if(shopOpen){
+      btn.textContent = 'Order';
+      btn.style.background = 'var(--saffron)';
+      btn.style.color = 'var(--leaf)';
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+    } else {
+      btn.textContent = 'Closed';
+      btn.style.background = '#8c8275';
+      btn.style.color = '#fff';
+      btn.style.opacity = '0.75';
+      btn.style.cursor = 'not-allowed';
+    }
+  });
 }
 
 async function loadOrders(){
@@ -981,13 +999,29 @@ async function poll(){
     renderCustomerTokens();
     checkCustomerReadyNotifications();
   }
+  const storedOpen = localStorage.getItem(SHOP_OPEN_STORAGE_KEY) !== 'false';
+  if(storedOpen !== shopOpen){
+    shopOpen = storedOpen;
+    updateShopOpenUI();
+  }
 }
 
 window.addEventListener('storage', (event) => {
+  if(event.key === SHOP_OPEN_STORAGE_KEY){
+    shopOpen = event.newValue !== 'false';
+    updateShopOpenUI();
+  }
   if(event.key === ORDER_STORAGE_KEY) poll();
 });
 if(orderChannel){
-  orderChannel.onmessage = () => poll();
+  orderChannel.onmessage = (event) => {
+    if(event.data && event.data.type === 'shop-status-updated'){
+      shopOpen = event.data.isOpen !== false;
+      updateShopOpenUI();
+    } else {
+      poll();
+    }
+  };
 }
 
 function enterSite(){
@@ -1001,12 +1035,13 @@ function enterSite(){
 
 async function init(){
   renderMenu();
+  updateShopOpenUI();
   myTokenIds = loadMyTokens();
   orders = await loadOrders();
   settings = await loadSettings();
   initFirebaseCloud();
   renderCustomerTokens();
-  setInterval(poll, 1500);
+  setInterval(poll, 1000);
 }
 
 init();
