@@ -1,0 +1,8 @@
+{
+  "name": "Raje Paan Darbar",
+  "short_name": "Raje Paan",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FBF3E3",
+  "theme_color": "#1B4332"
+}

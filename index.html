@@ -27,6 +27,9 @@
 }
 </script>
 
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1B4332">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Rozha+One&family=Poppins:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- Firebase App & Realtime Database SDKs -->
@@ -435,6 +438,7 @@ const orderChannel = 'BroadcastChannel' in window ? new BroadcastChannel('raje_p
 
 const SHOP_OPEN_STORAGE_KEY = 'raje_paan_shop_open';
 
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 let orders = [];
 let settings = { shopWhatsApp: '9180328338' };
 let myTokenIds = new Set();
@@ -461,16 +465,7 @@ function initFirebaseCloud(){
       }
       firebaseDb = firebase.database();
       // Listen to real-time cloud updates
-      firebaseDb.ref('orders').on('value', (snapshot) => {
-        const val = snapshot.val();
-        if(val){
-          const list = Object.values(val);
-          orders = list;
-          localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(list));
-          renderCustomerTokens();
-          checkCustomerReadyNotifications();
-        }
-      });
+      myTokenIds.forEach(watchMyOrder);
 
       // Listen to Shop Open / Closed Status
       firebaseDb.ref('shopStatus').on('value', (snapshot) => {
@@ -557,7 +552,69 @@ function saveMyTokens(setObj){
   try{ localStorage.setItem(MY_TOKENS_KEY, JSON.stringify(Array.from(setObj))); }catch(e){}
 }
 
-function getNextTokenNumber(){
+/* Each customer only watches their OWN orders (database rules keep other customers' data private) */
+const watchedIds = new Set();
+function watchMyOrder(id){
+  if(!firebaseDb || watchedIds.has(id)) return;
+  watchedIds.add(id);
+  firebaseDb.ref('orders/' + id).on('value', (snap) => {
+    const val = snap.val();
+    if(val){
+      const i = orders.findIndex(o => o.id === id);
+      if(i >= 0) orders[i] = val; else orders.push(val);
+    } else {
+      orders = orders.filter(o => o.id !== id);
+      myTokenIds.delete(id); saveMyTokens(myTokenIds);
+    }
+    try{ localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(orders)); }catch(e){}
+    renderCustomerTokens();
+    checkCustomerReadyNotifications();
+  });
+}
+
+/* Shared token counter in the cloud (transaction); restarts at #101 every day */
+async function getNextTokenNumber(){
+  if(firebaseDb){
+    try{
+      const today = new Date().toLocaleDateString('en-CA');
+      const res = await firebaseDb.ref('tokenCounter').transaction(cur => {
+        if(cur && typeof cur === 'object' && cur.day === today) return {day: today, n: (parseInt(cur.n) || 100) + 1};
+        return {day: today, n: 101};
+      });
+      if(res && res.committed && res.snapshot.val() && res.snapshot.val().n){
+        const n = parseInt(res.snapshot.val().n);
+        localStorage.setItem(TOKEN_COUNTER_KEY, String(n));
+        return n;
+      }
+    }catch(e){ console.warn('Token transaction failed, using local counter', e); }
+  }
+  return getNextTokenNumberLocal();
+}
+
+/* Write ONLY this customer's order, never overwrite other orders or admin status changes */
+async function pushOrder(order){
+  const list = (await loadOrders()).filter(o => o.id !== order.id && (Date.now() - (o.createdAt || 0)) < 172800000);
+  list.push(order);
+  orders = list;
+  try{
+    localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(list));
+    if(orderChannel) orderChannel.postMessage({type:'orders-updated', count: list.length});
+  }catch(e){}
+  if(firebaseDb){
+    try{
+      await firebaseDb.ref('orders/' + order.id).set(order);
+      watchMyOrder(order.id);
+    }catch(e){
+      console.warn('Cloud order write failed', e);
+      orders = orders.filter(o => o.id !== order.id);
+      try{ localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(orders)); }catch(_){}
+      return false;
+    }
+  }
+  return true;
+}
+
+function getNextTokenNumberLocal(){
   try{
     let cur = parseInt(localStorage.getItem(TOKEN_COUNTER_KEY) || '100');
     if(orders && orders.length > 0){
@@ -786,13 +843,16 @@ async function submitOrder(){
   if(!/^[0-9]{10}$/.test(phone)){ document.getElementById('errPhone').textContent = 'Enter a valid 10-digit mobile number.'; ok = false; }
   if(!ok) return;
 
+  if(!shopOpen){ closeModal(); openShopClosedModal(); return; }
   const btn = document.getElementById('submitOrderBtn');
+  if(btn.disabled) return;
+  const pushSub = await getPushSubscription();
   btn.disabled = true; btn.textContent = 'Generating Token...';
 
   const tokenNumber = getNextTokenNumber();
   const chosen = modalItem.tobacco ? modalItem.prices[0] : modalItem.prices[modalSizeIndex];
   const newOrder = {
-    id: 'TOKEN-' + tokenNumber,
+    id: 'TOKEN-' + tokenNumber + '-' + Math.random().toString(36).slice(2, 7),
     tokenNumber: tokenNumber,
     itemId: modalItem.id,
     itemName: modalItem.name + (modalItem.tobacco ? ' (' + modalStrength + ')' : (chosen.label ? ' (' + chosen.label + ')' : '')),
@@ -804,12 +864,16 @@ async function submitOrder(){
     status: 'pending',
     createdAt: Date.now(),
     readyAt: null,
-    pickedAt: null
+    pickedAt: null,
+    pushSub: pushSub || null
   };
 
-  const current = await loadOrders();
-  current.push(newOrder);
-  await saveOrders(current);
+  const saved = await pushOrder(newOrder);
+  if(!saved){
+    btn.disabled = false; btn.textContent = 'Place Order & Get Token';
+    document.getElementById('errName').textContent = 'Could not send your order. Check internet and try again.';
+    return;
+  }
 
   myTokenIds.add(newOrder.id);
   saveMyTokens(myTokenIds);
@@ -819,7 +883,6 @@ async function submitOrder(){
   // Open Order Success / WhatsApp Message to Shop Modal
   openCustomerSuccessModal(newOrder);
 
-  orders = current;
   renderCustomerTokens();
 }
 
@@ -856,10 +919,53 @@ function checkCustomerReadyNotifications(){
     if(myTokenIds.has(o.id) && o.status === 'ready' && !notifiedReadyTokens.has(o.id)){
       notifiedReadyTokens.add(o.id);
       playCustomerReadyChime();
+      sendReadyNotification(o);
       openOrderReadyModal(o);
       showToast('order', '🍃 Order Ready!', `Token #${o.tokenNumber} is ready for pickup!`);
     }
   });
+}
+
+/* Web Push: lets the shop notify the customer even when this page is closed */
+const VAPID_PUBLIC_KEY = 'BKEITp-CX1avOefNFPQeODWjI78lRrtm02m_-fwhdmSeQlKvwnoKvdF6_v3z-4SK6Mx28Y5zB66hj3IYNMpOSLo';
+function b64ToU8(b){
+  const s = (b + '='.repeat((4 - b.length % 4) % 4)).replace(/-/g,'+').replace(/_/g,'/');
+  return Uint8Array.from(atob(s), c => c.charCodeAt(0));
+}
+async function getPushSubscription(){
+  try{
+    if(!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return null;
+    let perm = Notification.permission;
+    if(perm === 'default') perm = await Notification.requestPermission();
+    if(perm !== 'granted') return null;
+    const reg = await Promise.race([navigator.serviceWorker.ready, new Promise(r => setTimeout(() => r(null), 4000))]);
+    if(!reg) return null;
+    let sub = await reg.pushManager.getSubscription();
+    if(!sub) sub = await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:b64ToU8(VAPID_PUBLIC_KEY)});
+    return sub.toJSON();
+  }catch(e){ console.warn('Push unavailable', e); return null; }
+}
+
+/* Keep the customer's screen on while an order is being prepared, and show a system notification when ready */
+let custWake = null;
+async function keepAwakeCustomer(){
+  try{
+    if('wakeLock' in navigator && !custWake){
+      custWake = await navigator.wakeLock.request('screen');
+      custWake.addEventListener('release', () => { custWake = null; });
+    }
+  }catch(e){}
+}
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible' && orders.some(o => myTokenIds.has(o.id) && o.status === 'pending')) keepAwakeCustomer();
+});
+function sendReadyNotification(o){
+  document.title = '🍃 READY! Token #' + o.tokenNumber;
+  try{
+    if('Notification' in window && Notification.permission === 'granted'){
+      new Notification('🍃 Your paan is ready!', { body: 'Token #' + o.tokenNumber + ' - collect it from the counter.' });
+    }
+  }catch(e){}
 }
 
 function openOrderReadyModal(order){
@@ -954,6 +1060,7 @@ function renderCustomerTokens(){
     return;
   }
   bar.style.display = 'block';
+  if(myOrders.some(o => o.status === 'pending')) keepAwakeCustomer();
   countEl.textContent = `${myOrders.length} Order${myOrders.length>1?'s':''}`;
 
   grid.innerHTML = myOrders.slice(-6).reverse().map(o => {
@@ -1040,6 +1147,7 @@ async function init(){
   orders = await loadOrders();
   settings = await loadSettings();
   initFirebaseCloud();
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
   renderCustomerTokens();
   setInterval(poll, 1000);
 }

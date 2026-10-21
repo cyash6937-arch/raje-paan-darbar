@@ -9,6 +9,7 @@
 <!-- Firebase App & Realtime Database SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <style>
   :root{
     --paper:#FBF3E3;
@@ -275,6 +276,7 @@
 <div class="toast-stack" id="toastStack"></div>
 
 <script>
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 let orders = [];
 let settings = {pendingReminderMin:15, notPickedAlertMin:60, shopWhatsApp:'9180328338', staffPin:'1234'};
 let smsLog = [];
@@ -308,7 +310,65 @@ const DEFAULT_FIREBASE_CONFIG = {
 /* ----------------------------------------------------
    FIREBASE REALTIME CLOUD SYNC
 ---------------------------------------------------- */
+/* Staff login (Firebase Auth). Listeners attach only after a successful sign-in. */
+let cloudAttached = false;
 function initFirebaseCloud(){
+  try{
+    if(typeof firebase === 'undefined' || !firebase.auth){ updateCloudStatusBadge(false); return; }
+    const saved = localStorage.getItem(FIREBASE_CONFIG_KEY);
+    const cfg = saved ? JSON.parse(saved) : DEFAULT_FIREBASE_CONFIG;
+    if(!firebase.apps.length) firebase.initializeApp(cfg);
+    firebase.auth().onAuthStateChanged(user => {
+      if(user){
+        closeLogin();
+        if(!cloudAttached){ cloudAttached = true; attachCloudListeners(); cleanupOldOrders(true); }
+      } else {
+        if(firebaseDb){ try{ firebaseDb.ref('orders').off(); firebaseDb.ref('shopStatus').off(); firebaseDb.ref('.info/connected').off(); }catch(e){} }
+        cloudAttached = false; firebaseDb = null; orders = [];
+        try{ localStorage.removeItem(ORDER_STORAGE_KEY); }catch(e){}
+        renderAdmin(); openLoginModal();
+      }
+    });
+  }catch(e){ console.warn('Cloud DB running in local mode', e); updateCloudStatusBadge(false); }
+}
+
+function openLoginModal(){
+  if(document.getElementById('loginOverlay')) return;
+  const o = document.createElement('div');
+  o.className = 'modal-overlay'; o.id = 'loginOverlay';
+  const inp = 'width:100%;padding:11px;margin-bottom:8px;border-radius:8px;border:1.5px solid var(--grey-pale);font-size:15px;';
+  o.innerHTML = `<div class="modal"><h3 style="color:var(--leaf);font-size:22px;">🔑 Staff Login</h3>
+    <p style="font-size:13px;color:var(--ink-soft);margin:6px 0 14px;">Sign in to open the kitchen order desk.</p>
+    <input type="email" id="loginEmail" placeholder="Staff email" autocomplete="username" style="${inp}">
+    <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password" style="${inp}" onkeydown="if(event.key==='Enter') doLogin()">
+    <div class="field-error" id="loginError"></div>
+    <button class="btn-primary" style="margin-top:10px;" onclick="doLogin()">Sign In</button></div>`;
+  document.body.appendChild(o);
+}
+function closeLogin(){ const el = document.getElementById('loginOverlay'); if(el) el.remove(); }
+async function doLogin(){
+  const err = document.getElementById('loginError');
+  err.textContent = '';
+  try{
+    await firebase.auth().signInWithEmailAndPassword(document.getElementById('loginEmail').value.trim(), document.getElementById('loginPass').value);
+    playBellSound('ready');
+  }catch(e){ err.textContent = '❌ Wrong email or password, or no internet.'; }
+}
+
+/* Keep the kitchen screen awake */
+let wakeLock = null;
+async function keepAwake(){
+  try{
+    if('wakeLock' in navigator && !wakeLock){
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    }
+  }catch(e){}
+}
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') keepAwake(); });
+document.addEventListener('click', keepAwake);
+
+function attachCloudListeners(){
   try{
     const savedConfig = localStorage.getItem(FIREBASE_CONFIG_KEY) || (DEFAULT_FIREBASE_CONFIG ? JSON.stringify(DEFAULT_FIREBASE_CONFIG) : null);
     if(savedConfig){
@@ -319,13 +379,17 @@ function initFirebaseCloud(){
         }
         firebaseDb = firebase.database();
         updateCloudStatusBadge(true);
+        firebaseDb.ref('.info/connected').on('value', (s) => {
+          if(s.val() === true){ updateCloudStatusBadge(true); }
+          else { updateCloudStatusBadge('offline'); showToast('alert', 'Connection Lost', 'Orders may be delayed. Check internet.'); }
+        });
 
         // Realtime listener for cross-device live orders
         firebaseDb.ref('orders').on('value', (snapshot) => {
           updateCloudStatusBadge(true);
           const val = snapshot.val();
-          if(val){
-            const list = Object.values(val);
+          {
+            const list = val ? Object.values(val) : [];
             let latestNewOrder = null;
 
             list.forEach(o => {
@@ -432,6 +496,10 @@ function updateCloudStatusBadge(status){
     btn.style.borderColor = '#ffb703';
     btn.style.color = '#ffb703';
     btn.style.background = 'rgba(255,183,3,0.18)';
+  } else if(status === 'offline'){
+    btn.innerHTML = `<span>🔴 Offline</span>`;
+    btn.classList.remove('synced');
+    btn.style.borderColor = '#ff4d4f'; btn.style.color = '#ff9999'; btn.style.background = 'rgba(255,77,79,0.25)';
   } else if(status === true || status === 'online'){
     btn.innerHTML = `<span>🟢 Cloud Live</span>`;
     btn.classList.add('synced');
@@ -591,7 +659,6 @@ function openPinModal(){
       <div class="field-error" id="pinError"></div>
 
       <button class="btn-primary" style="margin-top:10px;" onclick="verifyPin()">Unlock Kitchen Desk</button>
-      <p style="font-size:11.5px; color:var(--grey); margin-top:14px;">Default Staff PIN: <b>1234</b></p>
     </div>
   `;
   document.body.appendChild(overlay);
@@ -617,6 +684,7 @@ function verifyPin(){
 }
 
 function lockAdmin(){
+  if(typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser){ firebase.auth().signOut(); return; }
   sessionStorage.removeItem(ADMIN_AUTH_KEY);
   openPinModal();
 }
@@ -637,7 +705,7 @@ async function saveOrders(list){
     if(firebaseDb){
       const ordersObj = {};
       list.forEach(o => { ordersObj[o.id] = o; });
-      firebaseDb.ref('orders').set(ordersObj);
+      firebaseDb.ref('orders').update(ordersObj);
     }
   }catch(e){}
 }
@@ -681,12 +749,26 @@ function getNotificationMessage(o){
   return `Namaste ${o.customerName}, your fresh ${o.itemName} (Token #${o.tokenNumber || o.id}) is READY for pickup at Raje Paan Darbar!`;
 }
 
+/* Sends a real push notification to the customer's phone, even if their page is closed */
+async function notifyCustomerPush(o){
+  if(!o.pushSub || typeof firebase === 'undefined' || !firebase.auth || !firebase.auth().currentUser) return;
+  try{
+    const idToken = await firebase.auth().currentUser.getIdToken();
+    const r = await fetch('/api/notify', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ idToken, subscription:o.pushSub, title:'🍃 Your paan is ready!', body:'Token #' + o.tokenNumber + ' - ' + o.itemName + '. Please collect it from the counter.' })
+    });
+    if(!r.ok) showToast('alert', 'Push not sent', 'Use the WhatsApp or Call button for this customer.');
+  }catch(e){ showToast('alert', 'Push not sent', 'Use the WhatsApp or Call button for this customer.'); }
+}
+
 async function markReady(orderId){
   const o = orders.find(x => x.id === orderId);
   if(!o) return;
   o.status = 'ready';
   o.readyAt = Date.now();
   await saveOrders(orders);
+  notifyCustomerPush(o);
 
   const msg = getNotificationMessage(o);
   smsLog.unshift({time: Date.now(), phone: o.phone, name: o.customerName, message: msg, token: o.tokenNumber || o.id});
@@ -740,8 +822,8 @@ function triggerAdminNewOrderAlert(order){
       <div class="admin-alert-token">
         <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#855800;">Token Number</div>
         <div style="font-family:'Rozha One',serif; font-size:32px; color:var(--leaf); margin:2px 0;">#${order.tokenNumber}</div>
-        <div style="font-weight:700; font-size:14px;">${order.itemName} × ${order.qty}</div>
-        <div style="font-size:12.5px; color:var(--ink); margin-top:4px;">Customer: <b>${order.customerName}</b> (📞 ${order.phone})</div>
+        <div style="font-weight:700; font-size:14px;">${esc(order.itemName)} × ${order.qty}</div>
+        <div style="font-size:12.5px; color:var(--ink); margin-top:4px;">Customer: <b>${esc(order.customerName)}</b> (📞 ${esc(order.phone)})</div>
       </div>
 
       <button class="btn-primary" style="width:100%;" onclick="dismissAdminAlert()">✓ View &amp; Prepare Order</button>
@@ -807,13 +889,13 @@ function ticketHtml(o, kind){
       <div class="ticket-top">
         <div>
           <span class="ticket-token-number">Token #${o.tokenNumber || o.id.replace('TOKEN-','')}</span>
-          <div class="ticket-item">${o.itemName}</div>
+          <div class="ticket-item">${esc(o.itemName)}</div>
           <div class="ticket-qty">Qty: ${o.qty} · ₹${o.price * o.qty}</div>
         </div>
       </div>
       <div class="ticket-customer">
-        <div class="name">${o.customerName}</div>
-        <a class="phone-link" href="tel:${o.phone}">📞 ${o.phone}</a>
+        <div class="name">${esc(o.customerName)}</div>
+        <a class="phone-link" href="tel:${esc(o.phone)}">📞 ${esc(o.phone)}</a>
       </div>
       <div class="ticket-meta">
         <span class="elapsed">${elapsedLabel(elapsedFrom)}</span>
@@ -855,25 +937,39 @@ function renderAdmin(){
   let banners = '';
   const overdue = pending.filter(o => (Date.now()-o.createdAt)/60000 >= settings.pendingReminderMin);
   if(overdue.length){
-    banners += `<div class="reminder-banner">⏰ <span><b>${overdue.length}</b> order${overdue.length>1?'s':''} waiting over ${settings.pendingReminderMin} min: ${overdue.map(o=>'Token #'+(o.tokenNumber||o.id)+' ('+o.customerName+')').join(', ')}.</span></div>`;
+    banners += `<div class="reminder-banner">⏰ <span><b>${overdue.length}</b> order${overdue.length>1?'s':''} waiting over ${settings.pendingReminderMin} min: ${overdue.map(o=>'Token #'+(o.tokenNumber||o.id)+' ('+esc(o.customerName)+')').join(', ')}.</span></div>`;
   }
   if(notPicked.length){
-    banners += `<div class="alert-banner">📦 ${notPicked.length} order${notPicked.length>1?'s':''} not picked up: ${notPicked.map(o=>'Token #'+(o.tokenNumber||o.id)+' - '+o.phone).join(', ')}.</div>`;
+    banners += `<div class="alert-banner">📦 ${notPicked.length} order${notPicked.length>1?'s':''} not picked up: ${notPicked.map(o=>'Token #'+(o.tokenNumber||o.id)+' - '+esc(o.phone)).join(', ')}.</div>`;
   }
   bannerArea.innerHTML = banners;
 
   const smsEl = document.getElementById('smsLog');
   smsEl.innerHTML = smsLog.length
-    ? smsLog.slice(0,25).map(s => `<div class="sms-row"><span class="time">${new Date(s.time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span><span>To <b>${s.name}</b> (${s.phone}): "${s.message}"</span></div>`).join('')
+    ? smsLog.slice(0,25).map(s => `<div class="sms-row"><span class="time">${new Date(s.time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span><span>To <b>${esc(s.name)}</b> (${esc(s.phone)}): "${esc(s.message)}"</span></div>`).join('')
     : `<div class="empty-col">No messages sent yet.</div>`;
 
   const compEl = document.getElementById('completedList');
   compEl.innerHTML = picked.length
-    ? picked.slice(-20).reverse().map(o => `<span class="completed-chip">#${o.tokenNumber||o.id} · ${o.customerName} (${o.phone})</span>`).join('')
+    ? picked.slice(-20).reverse().map(o => `<span class="completed-chip">#${o.tokenNumber||o.id} · ${esc(o.customerName)} (${esc(o.phone)})</span>`).join('')
     : `<span class="empty-col">Nothing completed yet.</span>`;
 }
 
+let lastCleanup = 0;
+async function cleanupOldOrders(force){
+  const now = Date.now();
+  if(!force && now - lastCleanup < 3600000) return;
+  lastCleanup = now;
+  const cutoff = now - 48*3600*1000;
+  const old = orders.filter(o => o.createdAt && o.createdAt < cutoff);
+  if(!old.length) return;
+  orders = orders.filter(o => !(o.createdAt && o.createdAt < cutoff));
+  if(firebaseDb){ old.forEach(o => firebaseDb.ref('orders/' + o.id).remove().catch(()=>{})); }
+  else { await saveOrders(orders); }
+}
+
 async function tick(){
+  cleanupOldOrders(false);
   let changed = false;
   const now = Date.now();
 
@@ -904,7 +1000,7 @@ async function tick(){
 }
 
 async function poll(){
-  if(!firebaseDb){
+  if(!firebaseDb && !(typeof firebase !== 'undefined' && firebase.auth)){
     const fresh = await loadOrders();
     let latestNewOrder = null;
     fresh.forEach(o => {
@@ -937,13 +1033,14 @@ if(orderChannel){
 }
 
 async function init(){
-  checkAuth();
+  if(typeof firebase === 'undefined' || !firebase.auth) checkAuth();
   orders = await loadOrders();
   orders.forEach(o => knownOrderIds.add(o.id));
   settings = await loadSettings();
   applySettingsToInputs();
   smsLog = await loadSmsLog();
   initFirebaseCloud();
+  keepAwake();
   updateShopOpenButton();
   renderAdmin();
   initialised = true;

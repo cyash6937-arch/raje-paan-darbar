@@ -1,0 +1,5 @@
+{
+  "name": "raje-paan-darbar",
+  "version": "1.0.0",
+  "dependencies": { "web-push": "^3.6.7" }
+}
