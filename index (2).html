@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Raje Paan Darbar — Fresh Paan Menu & Order Counter</title>
+<meta name="description" content="Raje Paan Darbar — Family Paan Point. Browse fresh Meetha, Chocolate, Maghai, Calcutta, and Special Paan menu. Place live counter orders and get your token.">
+<meta name="keywords" content="Raje Paan Darbar, Paan Shop, Fresh Paan, Meetha Paan, Chocolate Paan, Maghai Paan, Family Paan Point, Paan Counter">
+<meta property="og:title" content="Raje Paan Darbar — Family Paan Point">
+<meta property="og:description" content="Browse fresh paan varieties, customize your order, and get live counter tokens.">
+<meta property="og:url" content="https://raje-paan-darbar.vercel.app">
+<meta property="og:type" content="restaurant">
+
+<!-- Google Search Structured Schema (JSON-LD) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Restaurant",
+  "name": "Raje Paan Darbar",
+  "description": "Family Paan Point & Live Order Counter offering authentic sweet, chocolate, maghai and specialty paans.",
+  "url": "https://raje-paan-darbar.vercel.app",
+  "hasMenu": "https://raje-paan-darbar.vercel.app",
+  "servesCuisine": "Indian Paan & Refreshments",
+  "priceRange": "₹15 - ₹100",
+  "currenciesAccepted": "INR",
+  "paymentAccepted": "Cash, UPI, Online"
+}
+</script>
+
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1B4332">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rozha+One&family=Poppins:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Firebase App & Realtime Database SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+  :root{
+    --paper:#FBF3E3;
+    --paper-dark:#F3E7CC;
+    --card:#FFFDF8;
+    --ink:#2B2620;
+    --ink-soft:#7A6C58;
+    --leaf:#1B4332;
+    --leaf-light:#2F6B4F;
+    --leaf-pale:#DCEBE1;
+    --saffron:#E8A33D;
+    --saffron-pale:#FBEBD3;
+    --maroon:#7A1F2B;
+    --maroon-pale:#F3DEE0;
+    --whatsapp:#25D366;
+    --whatsapp-dark:#128C7E;
+    --gold:#C9A227;
+    --grey:#9B8F7C;
+    --grey-pale:#EFEAE0;
+    --shadow: 0 6px 20px rgba(43,38,32,0.12);
+    --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Poppins',sans-serif;-webkit-font-smoothing:antialiased;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .display{font-family:'Rozha One',serif;}
+
+  /* Header - Clean Customer Header with NO Admin buttons */
+  header.shop-header{
+    background:var(--leaf);
+    color:var(--paper);
+    padding:16px 20px;
+    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    position:sticky; top:0; z-index:50;
+    box-shadow:0 4px 14px rgba(0,0,0,0.18);
+  }
+  .brand{display:flex; align-items:center; gap:12px;}
+  .brand h1{font-family:'Rozha One',serif; font-size:22px; margin:0; letter-spacing:0.5px; line-height:1.15;}
+  .brand p{margin:0; font-size:11px; letter-spacing:2px; text-transform:uppercase; opacity:0.75;}
+
+  .shop-tagline-badge{
+    background:rgba(255,255,255,0.12); color:#F8E9C7; padding:6px 14px; border-radius:999px;
+    font-size:12px; font-weight:600; letter-spacing:1px; display:inline-flex; align-items:center; gap:6px;
+  }
+  .live-dot{width:8px; height:8px; border-radius:50%; background:#25D366; animation:pulseDot 1.5s infinite;}
+  @keyframes pulseDot{0%,100%{opacity:1; transform:scale(1);} 50%{opacity:0.4; transform:scale(0.8);}}
+
+  main{max-width:1050px; margin:0 auto; padding:20px 16px 80px;}
+  .hint-bar{
+    font-size:12.5px; color:var(--ink-soft); text-align:center; margin-bottom:18px; line-height:1.5;
+  }
+
+  /* Customer View */
+  .menu-intro{text-align:center; margin-bottom:20px;}
+  .menu-intro h2{font-family:'Rozha One',serif; font-size:28px; color:var(--leaf); margin:0 0 4px;}
+  .menu-intro p{color:var(--ink-soft); margin:0; font-size:13.5px;}
+
+  .cat-nav{display:flex; flex-direction:column; gap:8px; padding:4px 2px 16px; margin-bottom:8px;}
+  .cat-nav button{
+    background:var(--card); border:1.5px solid var(--grey-pale); color:var(--ink-soft);
+    padding:10px 16px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; text-align:left;
+    transition:background 0.15s, border-color 0.15s;
+  }
+  .cat-nav button:hover{background:var(--leaf-pale); border-color:var(--leaf-light); color:var(--leaf);}
+  .cat-nav button.tobacco-pill{border-color:var(--maroon); color:var(--maroon);}
+  .cat-nav button.tobacco-pill:hover{background:var(--maroon-pale);}
+
+  .category-block{margin-bottom:14px; scroll-margin-top:140px; display:none;}
+  .category-block.open{display:block;}
+  .cat-ribbon{
+    display:inline-flex; align-items:center; gap:8px; background:var(--maroon); color:#fff;
+    padding:8px 18px 8px 14px; border-radius:0 999px 999px 0; font-weight:700; font-size:13px;
+    text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px; box-shadow:var(--shadow);
+  }
+  .cat-ribbon .leaf-mini{font-size:14px;}
+  .cat-ribbon .age-tag{
+    background:#fff; color:var(--maroon); font-size:10px; padding:2px 8px; border-radius:999px; font-weight:800; margin-left:4px;
+  }
+
+  .menu-list{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;}
+  .menu-row{display:flex; flex-direction:column; border-bottom:1px solid var(--grey-pale); cursor:pointer;}
+  .menu-row:last-child{border-bottom:none;}
+  .row-main{display:flex; align-items:center; justify-content:space-between; gap:14px; padding:13px 18px; transition:background 0.15s;}
+  .row-main:hover{background:var(--leaf-pale);}
+  .row-more{display:none; padding:0 18px 14px 30px; font-size:12.5px; color:var(--ink-soft); line-height:1.6;}
+  .menu-row.expanded .row-more{display:block;}
+  .menu-row.expanded .row-main{background:var(--leaf-pale);}
+  .chev{font-size:11px; color:var(--grey); margin-left:6px; transition:transform 0.2s; display:inline-block;}
+  .menu-row.expanded .chev{transform:rotate(180deg);}
+  .row-name{font-size:14.5px; font-weight:500; color:var(--ink);}
+  .row-name .leaf-tick{color:var(--leaf-light); margin-right:6px; font-size:12px;}
+  .row-right{display:flex; align-items:center; gap:10px; flex-shrink:0;}
+  .row-price{font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:14px; color:var(--leaf); white-space:nowrap;}
+  .row-order-btn{
+    background:var(--saffron); color:var(--leaf); border:none; padding:7px 15px; border-radius:999px;
+    font-weight:700; font-size:12px; cursor:pointer; white-space:nowrap; transition:background 0.15s, transform 0.1s;
+  }
+  .row-order-btn:hover{background:var(--gold); transform:scale(1.03);}
+
+  /* Customer Active Status Bar */
+  .customer-status-bar{
+    background:var(--card); border-radius:var(--radius); padding:16px 20px; margin-bottom:20px;
+    box-shadow:var(--shadow); border:1.5px solid var(--leaf-pale);
+  }
+  .status-bar-header{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
+  .status-bar-header h4{margin:0; font-size:14px; color:var(--leaf); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;}
+  .status-tokens-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:12px;}
+  .cust-token-card{
+    background:var(--paper); border-radius:12px; padding:14px; border-left:5px solid var(--grey);
+    box-shadow:0 3px 10px rgba(0,0,0,0.06); display:flex; flex-direction:column; gap:6px;
+  }
+  .cust-token-card.pending{border-left-color:var(--saffron);}
+  .cust-token-card.ready{border-left-color:var(--leaf); background:var(--leaf-pale); animation:pulseGreen 2s infinite;}
+  .cust-token-card.not_picked{border-left-color:var(--maroon); background:var(--maroon-pale);}
+  @keyframes pulseGreen{0%,100%{box-shadow:0 0 0 0 rgba(47,107,79,0.25);}50%{box-shadow:0 0 0 6px rgba(47,107,79,0);}}
+  .cust-token-top{display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:700;}
+  .token-badge-large{
+    background:var(--leaf); color:#fff; padding:3px 10px; border-radius:6px; font-family:'IBM Plex Mono',monospace; font-size:13px;
+  }
+  .cust-token-status{padding:3px 8px; border-radius:999px; font-size:11px; font-weight:700; text-transform:uppercase;}
+  .status-tag-pending{background:var(--saffron-pale); color:#855800;}
+  .status-tag-ready{background:var(--leaf); color:#fff;}
+  .status-tag-not_picked{background:var(--maroon); color:#fff;}
+  .status-tag-picked{background:var(--grey-pale); color:var(--ink-soft);}
+
+  /* Modals */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(27,67,50,0.55); display:flex; align-items:center; justify-content:center;
+    z-index:100; padding:16px; backdrop-filter:blur(2px);
+  }
+  .modal{
+    background:var(--paper); border-radius:16px; padding:24px; max-width:420px; width:100%; box-shadow:0 20px 50px rgba(0,0,0,0.3);
+    position:relative; max-height:90vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  }
+  .modal h3{font-family:'Rozha One',serif; color:var(--leaf); font-size:22px; margin:0 0 2px;}
+  .modal .item-sub{color:var(--ink-soft); font-size:13px; margin:0 0 16px;}
+  .modal label{display:block; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--ink-soft); margin:14px 0 6px;}
+  .modal input{
+    width:100%; padding:11px 12px; border-radius:8px; border:1.5px solid var(--grey-pale); font-size:14px; font-family:'Poppins',sans-serif;
+    background:#fff;
+  }
+  .modal input:focus{outline:none; border-color:var(--saffron);}
+
+  .size-row{display:flex; flex-direction:column; gap:8px;}
+  .size-chip{
+    border:2px solid var(--grey-pale); background:#fff; color:var(--ink-soft); padding:9px 16px; border-radius:10px;
+    font-size:13px; font-weight:600; cursor:pointer; display:flex; justify-content:space-between; align-items:center;
+  }
+  .size-chip .sp{font-family:'IBM Plex Mono',monospace; margin-left:6px;}
+  .size-chip.on{background:var(--leaf); border-color:var(--leaf); color:#fff;}
+
+  .qty-row{display:flex; align-items:center; gap:12px;}
+  .qty-row button{
+    width:32px; height:32px; border-radius:50%; border:1.5px solid var(--leaf); background:#fff; color:var(--leaf);
+    font-size:16px; font-weight:700; cursor:pointer;
+  }
+  .qty-row span{font-family:'IBM Plex Mono',monospace; font-size:16px; min-width:24px; text-align:center;}
+
+  .modal-total{
+    margin-top:16px; padding:12px 14px; background:var(--leaf-pale); border-radius:10px; display:flex; justify-content:space-between; align-items:center;
+    font-size:14px;
+  }
+  .modal-total b{font-family:'IBM Plex Mono',monospace; font-size:18px; color:var(--leaf);}
+  .modal-actions{display:flex; gap:10px; margin-top:20px;}
+  .btn-primary{
+    flex:1; background:var(--leaf); color:#fff; border:none; padding:12px; border-radius:999px; font-weight:700; font-size:14px; cursor:pointer;
+  }
+  .btn-primary:disabled{opacity:0.4; cursor:not-allowed;}
+  .btn-ghost{
+    background:transparent; border:1.5px solid var(--grey-pale); color:var(--ink-soft); padding:12px 16px; border-radius:999px; font-weight:600; cursor:pointer; font-size:14px;
+  }
+  .field-error{color:var(--maroon); font-size:11.5px; margin-top:4px; min-height:14px;}
+
+  /* Success & WhatsApp Modal */
+  .success-modal{text-align:center;}
+  .success-icon{font-size:44px; margin-bottom:8px;}
+  .success-token-box{
+    background:var(--leaf-pale); border-radius:12px; padding:16px; margin:16px 0; border:1.5px dashed var(--leaf);
+  }
+  .token-number-huge{font-family:'Rozha One',serif; font-size:36px; color:var(--leaf); margin:0;}
+  .btn-whatsapp-large{
+    background:var(--whatsapp); color:#fff; width:100%; border:none; padding:14px; border-radius:999px;
+    font-size:14px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    text-decoration:none; margin-top:10px; box-shadow:0 4px 14px rgba(37,211,102,0.35); transition:transform 0.15s;
+  }
+  .btn-whatsapp-large:hover{transform:scale(1.02); background:var(--whatsapp-dark);}
+
+  /* Age Modal */
+  .age-modal .modal{max-width:340px; text-align:center;}
+  .age-modal h3{font-family:'Rozha One',serif; color:var(--maroon); font-size:20px; margin:0 0 10px;}
+  .age-modal p{font-size:13.5px; color:var(--ink-soft); line-height:1.6; margin:0 0 20px;}
+  .age-actions{display:flex; gap:10px;}
+  .age-actions button{flex:1; padding:11px; border-radius:999px; font-weight:700; font-size:13.5px; cursor:pointer; border:none;}
+  .age-yes{background:var(--maroon); color:#fff;}
+  .age-no{background:var(--grey-pale); color:var(--ink-soft);}
+
+  /* Toasts */
+  .toast-stack{position:fixed; top:80px; right:16px; z-index:200; display:flex; flex-direction:column; gap:10px; max-width:340px; pointer-events:none;}
+  .toast{
+    background:var(--leaf); color:#fff; padding:12px 16px; border-radius:10px; font-size:13px; box-shadow:0 10px 24px rgba(0,0,0,0.25);
+    animation:slidein 0.25s ease; pointer-events:auto;
+  }
+  .toast.order{background:var(--leaf-light);}
+  .toast b{display:block; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; opacity:0.9; margin-bottom:2px;}
+  @keyframes slidein{from{transform:translateX(30px); opacity:0;} to{transform:translateX(0); opacity:1;}}
+
+  /* Splash */
+  .splash-screen{
+    position:fixed; inset:0; overflow:hidden;
+    background:
+      radial-gradient(ellipse 900px 700px at 50% 38%, rgba(232,163,61,0.16), transparent 60%),
+      linear-gradient(160deg, #0B2A1C 0%, #143B29 42%, #1B4332 68%, #2F6B4F 100%);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    z-index:500; cursor:pointer; transition:opacity 0.6s ease, visibility 0.6s;
+  }
+  .splash-screen.hidden{opacity:0; visibility:hidden; pointer-events:none;}
+  .splash-vignette{position:absolute; inset:0; box-shadow:inset 0 0 180px 60px rgba(0,0,0,0.45); pointer-events:none;}
+  .splash-content{position:relative; display:flex; flex-direction:column; align-items:center; gap:16px; padding:0 20px; text-align:center;}
+  .splash-title{font-family:'Rozha One',serif; color:#F8E9C7; font-size:clamp(22px,5vw,32px); letter-spacing:1px; margin:6px 0 0;}
+  .splash-subtitle{font-family:'Poppins',sans-serif; color:rgba(248,233,199,0.75); font-size:12px; letter-spacing:3px; text-transform:uppercase;}
+  .splash-cta{
+    border:1.5px solid rgba(244,210,140,0.7); color:#F8E9C7; background:rgba(244,210,140,0.06);
+    padding:13px 30px; border-radius:999px; font-family:'Poppins',sans-serif; font-weight:600; font-size:13px;
+    letter-spacing:2px; text-transform:uppercase;
+  }
+  /* Shop Closed Banner */
+  .shop-closed-banner{
+    background:var(--maroon-pale); border:1.5px solid var(--maroon); color:var(--maroon);
+    border-radius:var(--radius); padding:16px 20px; margin-bottom:20px; text-align:center;
+    box-shadow:var(--shadow); animation:slidein 0.3s ease;
+  }
+  .shop-closed-banner h3{margin:0 0 6px; font-family:'Rozha One',serif; font-size:20px;}
+  .shop-closed-banner p{margin:0; font-size:13px; opacity:0.9;}
+
+  body.locked{overflow:hidden;}
+</style>
+</head>
+<body class="locked">
+
+<!-- Splash Screen -->
+<div class="splash-screen" id="splashScreen" onclick="enterSite()">
+  <div class="splash-vignette"></div>
+  <div class="splash-content">
+    <h2 class="splash-title">Raje Paan Darbar</h2>
+    <p class="splash-subtitle">Family Paan Point</p>
+    <span class="splash-cta">Enter Order Counter →</span>
+  </div>
+</div>
+
+<!-- Clean Customer Header (NO Admin Controls Visible) -->
+<header class="shop-header">
+  <div class="brand">
+    <div>
+      <h1>🍃 Raje Paan Darbar</h1>
+      <p>Family Paan Point · Fresh Menu</p>
+    </div>
+  </div>
+  <div class="shop-tagline-badge" id="headerStatusBadge">
+    <span class="live-dot"></span>
+    <span>Live Ordering Active</span>
+  </div>
+</header>
+
+<main>
+  <!-- CUSTOMER VIEW -->
+  <section id="customerView">
+    <!-- Shop Closed Alert Banner -->
+    <div class="shop-closed-banner" id="shopClosedBanner" style="display:none;">
+      <h3>🔴 Counter Ordering Currently Closed</h3>
+      <p>The shop counter is not taking live orders right now. You can still browse our fresh menu below!</p>
+    </div>
+
+    <p class="hint-bar">Place your order below to get your Token Number &amp; optionally send a WhatsApp message to the shop!</p>
+    
+    <!-- Customer Active Orders Status Bar -->
+    <div class="customer-status-bar" id="custStatusBar" style="display:none;">
+      <div class="status-bar-header">
+        <h4>🍃 Your Active Order Tokens</h4>
+        <span class="mono" id="custOrderCount" style="font-size:12px; color:var(--ink-soft);"></span>
+      </div>
+      <div class="status-tokens-grid" id="custTokensGrid"></div>
+    </div>
+
+    <div class="menu-intro">
+      <h2>Today's Fresh Paan Menu</h2>
+      <p>Select your favorite paan or explore our signature creations below.</p>
+    </div>
+    
+    <div class="cat-nav" id="catNav"></div>
+    <div id="menuCategories"></div>
+  </section>
+</main>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<script>
+/* ----------------------------------------------------
+   DATA & CATEGORIES
+---------------------------------------------------- */
+function twoPrices(a,b){ return [{label:'Half', price:a}, {label:'Full', price:b}]; }
+function onePrice(a){ return [{label:'', price:a}]; }
+
+const CATEGORIES = [
+  {
+    key:'special', title:'Raje Paan Darbar Special', tobacco:false,
+    items:[
+      {id:'sp-rampyare', name:'Special Rampyare Paan', prices:onePrice(30)},
+      {id:'sp-dryfruit', name:'Dry Fruit Paan', prices:onePrice(40)},
+      {id:'sp-masala', name:'Masala Paan', prices:onePrice(20)},
+      {id:'sp-banarasimasala', name:'Banarasi Masala Paan', prices:onePrice(20)},
+      {id:'sp-chamanchutney', name:'Chaman Chutney Paan', prices:twoPrices(20,25)},
+      {id:'sp-khushboo', name:'Khushboo Paan', prices:twoPrices(20,25)},
+      {id:'sp-kashmiribadishop', name:'Kashmiri Badishop Paan', prices:twoPrices(20,25)},
+      {id:'sp-gulkand', name:'Gulkand Paan', prices:onePrice(20)},
+      {id:'sp-kesar', name:'Kesar Paan', prices:onePrice(60)},
+      {id:'sp-shilajit', name:'Shilajit Paan', prices:onePrice(40)},
+      {id:'sp-fire', name:'Fire Paan', prices:onePrice(40)},
+      {id:'sp-ayurvedic', name:'Ayurvedic Paan', prices:onePrice(20)},
+      {id:'sp-sardikhasi', name:'Sardi-Khasi Special Paan', prices:onePrice(20)},
+      {id:'sp-sugarfree', name:'Sugar Free Paan', prices:onePrice(20)},
+      {id:'sp-kolkatasada', name:'Kolkata Sada Paan', prices:twoPrices(15,20)}
+    ]
+  },
+  {
+    key:'tobacco', title:'Tobacco Paan', tobacco:true,
+    items:[
+      {id:'tb-phoolchand', name:'Phoolchand Paan', prices:twoPrices(30,35)},
+      {id:'tb-rimzim', name:'Rimzim Paan', prices:twoPrices(35,40)},
+      {id:'tb-kolkata120300', name:'Kolkata 120-300 Paan', prices:twoPrices(25,30)},
+      {id:'tb-kolkata360', name:'Kolkata 360 Paan', prices:twoPrices(25,30)},
+      {id:'tb-banaras120300', name:'Banaras 120-300 Paan', prices:twoPrices(25,30)},
+      {id:'tb-banaras360', name:'Banaras 360 Paan', prices:twoPrices(25,30)},
+      {id:'tb-khimam', name:'Khimam Paan', prices:twoPrices(30,35)},
+      {id:'tb-powder', name:'Powder Paan', prices:twoPrices(30,35)}
+    ]
+  },
+  {
+    key:'flavour', title:'Flavour Paan', tobacco:false,
+    items:[
+      {id:'fl-chocolate', name:'Chocolate Paan', prices:onePrice(30)},
+      {id:'fl-malaikulfi', name:'Malai Kulfi Paan', prices:onePrice(30)},
+      {id:'fl-mango', name:'Mango Paan', prices:onePrice(30)},
+      {id:'fl-belgiumchoc', name:'Belgium Chocolate Paan', prices:onePrice(30)},
+      {id:'fl-roastedcoffee', name:'Roasted Coffee Paan', prices:onePrice(30)},
+      {id:'fl-pista', name:'Pista Paan', prices:onePrice(30)},
+      {id:'fl-strawberry', name:'Strawberry Paan', prices:onePrice(30)},
+      {id:'fl-coconut', name:'Coconut Paan', prices:onePrice(30)},
+      {id:'fl-mixfruit', name:'Mix Fruit Paan', prices:onePrice(30)},
+      {id:'fl-mulberry', name:'Mulberry Paan', prices:onePrice(30)},
+      {id:'fl-vanilla', name:'Vanilla Paan', prices:onePrice(30)},
+      {id:'fl-pineapple', name:'Pineapple Paan', prices:onePrice(30)},
+      {id:'fl-butterscotch', name:'Butterscotch Paan', prices:onePrice(30)},
+      {id:'fl-chocvanilla', name:'Chocolate Vanilla Twist', prices:onePrice(30)}
+    ]
+  },
+  {
+    key:'shots', title:'Paan Shots', tobacco:false,
+    items:[
+      {id:'sh-paanshots', name:'Paan Shots', prices:onePrice(20)},
+      {id:'sh-masalapaanshots', name:'Masala Paan Shots', prices:onePrice(30)}
+    ]
+  },
+  {
+    key:'super', title:'Super Paan', tobacco:false,
+    items:[
+      {id:'su-couple', name:'Special Couple Paan', prices:onePrice(500)}
+    ]
+  },
+  {
+    key:'ladu', title:'Ladu Paan', tobacco:false,
+    items:[
+      {id:'la-ladu', name:'Ladu Paan', prices:onePrice(20)},
+      {id:'la-chocladu', name:'Chocolate Ladu Paan', prices:onePrice(30)}
+    ]
+  },
+  {
+    key:'maghai', title:'Maghai Paan', tobacco:false,
+    items:[
+      {id:'ma-maghai', name:'Maghai Paan', prices:onePrice(20)},
+      {id:'ma-maghaichoc', name:'Maghai Chocolate Paan', prices:onePrice(30)},
+      {id:'ma-maghaichocvanilla', name:'Maghai Chocolate Vanilla Twist', prices:onePrice(40)}
+    ]
+  }
+];
+
+const ITEM_INDEX = {};
+CATEGORIES.forEach(cat => cat.items.forEach(it => { 
+  ITEM_INDEX[it.id] = {...it, categoryKey:cat.key, categoryTitle:cat.title, tobacco:cat.tobacco}; 
+}));
+
+/* ----------------------------------------------------
+   STORAGE & REALTIME CLOUD SYNC (FIREBASE + LOCAL)
+---------------------------------------------------- */
+const ORDER_STORAGE_KEY = 'raje_paan_orders';
+const SETTINGS_STORAGE_KEY = 'raje_paan_settings';
+const MY_TOKENS_KEY = 'raje_paan_my_tokens';
+const TOKEN_COUNTER_KEY = 'raje_paan_token_seq';
+const FIREBASE_CONFIG_KEY = 'raje_paan_firebase_config';
+
+const orderChannel = 'BroadcastChannel' in window ? new BroadcastChannel('raje_paan_orders_channel') : null;
+
+const SHOP_OPEN_STORAGE_KEY = 'raje_paan_shop_open';
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+let orders = [];
+let settings = { shopWhatsApp: '9180328338' };
+let myTokenIds = new Set();
+let firebaseDb = null;
+let shopOpen = localStorage.getItem(SHOP_OPEN_STORAGE_KEY) !== 'false';
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAsEZZ5cz-xsCB8_xxRQjL5vEvAc32i6q4",
+  authDomain: "raje-paan-darbar.firebaseapp.com",
+  databaseURL: "https://raje-paan-darbar-default-rtdb.firebaseio.com",
+  projectId: "raje-paan-darbar",
+  storageBucket: "raje-paan-darbar.firebasestorage.app",
+  messagingSenderId: "9964068683",
+  appId: "1:9964068683:web:46411a1e35bae6916f12ce",
+  measurementId: "G-7MXDE07Y3Q"
+};
+
+/* Initialize Realtime Cloud Database */
+function initFirebaseCloud(){
+  try{
+    if(typeof firebase !== 'undefined' && FIREBASE_CONFIG.apiKey){
+      if(!firebase.apps.length){
+        firebase.initializeApp(FIREBASE_CONFIG);
+      }
+      firebaseDb = firebase.database();
+      // Listen to real-time cloud updates
+      myTokenIds.forEach(watchMyOrder);
+
+      // Listen to Shop Open / Closed Status
+      firebaseDb.ref('shopStatus').on('value', (snapshot) => {
+        const val = snapshot.val();
+        if(val !== null){
+          shopOpen = typeof val === 'object' ? (val.isOpen !== false) : (val === true || val === 'open');
+          localStorage.setItem(SHOP_OPEN_STORAGE_KEY, shopOpen ? 'true' : 'false');
+          updateShopOpenUI();
+        }
+      });
+    }
+  }catch(e){ console.warn("Cloud sync running in local mode", e); }
+}
+
+function updateShopOpenUI(){
+  const badge = document.getElementById('headerStatusBadge');
+  const banner = document.getElementById('shopClosedBanner');
+  if(badge){
+    if(shopOpen){
+      badge.innerHTML = '<span class="live-dot"></span> <span>Live Ordering Active</span>';
+      badge.style.background = 'rgba(255,255,255,0.15)';
+      badge.style.color = '#F8E9C7';
+    } else {
+      badge.innerHTML = '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#ff4d4f;margin-right:6px;box-shadow:0 0 8px #ff4d4f;"></span> <span>🔴 SHOP CLOSED</span>';
+      badge.style.background = 'rgba(255,77,79,0.3)';
+      badge.style.color = '#ff9999';
+    }
+  }
+  if(banner){
+    banner.style.display = shopOpen ? 'none' : 'block';
+  }
+  document.querySelectorAll('.row-order-btn').forEach(btn => {
+    if(shopOpen){
+      btn.textContent = 'Order';
+      btn.style.background = 'var(--saffron)';
+      btn.style.color = 'var(--leaf)';
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+    } else {
+      btn.textContent = 'Closed';
+      btn.style.background = '#8c8275';
+      btn.style.color = '#fff';
+      btn.style.opacity = '0.75';
+      btn.style.cursor = 'not-allowed';
+    }
+  });
+}
+
+async function loadOrders(){
+  try{
+    const val = localStorage.getItem(ORDER_STORAGE_KEY);
+    return val ? JSON.parse(val) : [];
+  }catch(e){ return []; }
+}
+
+async function saveOrders(list){
+  try{
+    localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(list));
+    if(orderChannel) orderChannel.postMessage({type:'orders-updated', count: list.length});
+    // Cloud push if active
+    if(firebaseDb){
+      const ordersObj = {};
+      list.forEach(o => { ordersObj[o.id] = o; });
+      firebaseDb.ref('orders').set(ordersObj);
+    }
+  }catch(e){}
+}
+
+async function loadSettings(){
+  try{
+    const val = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    return val ? JSON.parse(val) : { shopWhatsApp: '9180328338' };
+  }catch(e){ return { shopWhatsApp:'9180328338' }; }
+}
+
+function loadMyTokens(){
+  try{
+    const val = localStorage.getItem(MY_TOKENS_KEY);
+    return val ? new Set(JSON.parse(val)) : new Set();
+  }catch(e){ return new Set(); }
+}
+
+function saveMyTokens(setObj){
+  try{ localStorage.setItem(MY_TOKENS_KEY, JSON.stringify(Array.from(setObj))); }catch(e){}
+}
+
+/* Each customer only watches their OWN orders (database rules keep other customers' data private) */
+const watchedIds = new Set();
+function watchMyOrder(id){
+  if(!firebaseDb || watchedIds.has(id)) return;
+  watchedIds.add(id);
+  firebaseDb.ref('orders/' + id).on('value', (snap) => {
+    const val = snap.val();
+    if(val){
+      const i = orders.findIndex(o => o.id === id);
+      if(i >= 0) orders[i] = val; else orders.push(val);
+    } else {
+      orders = orders.filter(o => o.id !== id);
+      myTokenIds.delete(id); saveMyTokens(myTokenIds);
+    }
+    try{ localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(orders)); }catch(e){}
+    renderCustomerTokens();
+    checkCustomerReadyNotifications();
+  });
+}
+
+/* Shared token counter in the cloud (transaction); restarts at #101 every day */
+async function getNextTokenNumber(){
+  if(firebaseDb){
+    try{
+      const today = new Date().toLocaleDateString('en-CA');
+      const res = await firebaseDb.ref('tokenCounter').transaction(cur => {
+        if(cur && typeof cur === 'object' && cur.day === today) return {day: today, n: (parseInt(cur.n) || 100) + 1};
+        return {day: today, n: 101};
+      });
+      if(res && res.committed && res.snapshot.val() && res.snapshot.val().n){
+        const n = parseInt(res.snapshot.val().n);
+        localStorage.setItem(TOKEN_COUNTER_KEY, String(n));
+        return n;
+      }
+    }catch(e){ console.warn('Token transaction failed, using local counter', e); }
+  }
+  return getNextTokenNumberLocal();
+}
+
+/* Write ONLY this customer's order, never overwrite other orders or admin status changes */
+async function pushOrder(order){
+  const list = (await loadOrders()).filter(o => o.id !== order.id && (Date.now() - (o.createdAt || 0)) < 172800000);
+  list.push(order);
+  orders = list;
+  try{
+    localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(list));
+    if(orderChannel) orderChannel.postMessage({type:'orders-updated', count: list.length});
+  }catch(e){}
+  if(firebaseDb){
+    try{
+      await firebaseDb.ref('orders/' + order.id).set(order);
+      watchMyOrder(order.id);
+    }catch(e){
+      console.warn('Cloud order write failed', e);
+      window.lastCloudError = (e && (e.code || e.message)) || 'unknown';
+      orders = orders.filter(o => o.id !== order.id);
+      try{ localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(orders)); }catch(_){}
+      return false;
+    }
+  }
+  return true;
+}
+
+function getNextTokenNumberLocal(){
+  try{
+    let cur = parseInt(localStorage.getItem(TOKEN_COUNTER_KEY) || '100');
+    if(orders && orders.length > 0){
+      const maxExisting = Math.max(...orders.map(o => parseInt(o.tokenNumber) || 100));
+      if(maxExisting >= cur) cur = maxExisting;
+    }
+    cur += 1;
+    localStorage.setItem(TOKEN_COUNTER_KEY, cur.toString());
+    return cur;
+  }catch(e){ return Math.floor(100 + Math.random()*900); }
+}
+
+/* ----------------------------------------------------
+   CUSTOMER MENU & ORDERING
+---------------------------------------------------- */
+function priceLabel(prices){
+  if(prices.length === 1) return '₹' + prices[0].price;
+  return prices.map(p => '₹' + p.price).join(' / ');
+}
+
+function renderMenu(){
+  const nav = document.getElementById('catNav');
+  nav.innerHTML = CATEGORIES.map(cat => `
+    <button class="${cat.tobacco ? 'tobacco-pill' : ''}" onclick="scrollToCategory('${cat.key}')">${cat.title}${cat.tobacco ? ' 🔞' : ''}</button>
+  `).join('');
+
+  const wrap = document.getElementById('menuCategories');
+  wrap.innerHTML = CATEGORIES.map(cat => `
+    <div class="category-block" id="cat-${cat.key}">
+      <div class="cat-ribbon"><span class="leaf-mini">🍃</span>${cat.title}${cat.tobacco ? '<span class="age-tag">18+</span>' : ''}</div>
+      <div class="menu-list">
+        ${cat.items.map(item => `
+          <div class="menu-row" id="row-${item.id}">
+            <div class="row-main" onclick="toggleRow('${item.id}')">
+              <span class="row-name"><span class="leaf-tick">🍃</span>${item.name}<span class="chev">▾</span></span>
+              <span class="row-right">
+                <span class="row-price">${item.tobacco ? '₹' + item.prices[0].price : priceLabel(item.prices)}</span>
+                <button class="row-order-btn" onclick="event.stopPropagation(); handleItemClick('${item.id}')">Order</button>
+              </span>
+            </div>
+            <div class="row-more">
+              ${item.tobacco ? `₹${item.prices[0].price} · Choose Soft, Medium or Kadak. 18+ only.` : (item.prices.length > 1 ? `Available in Half (₹${item.prices[0].price}) and Full (₹${item.prices[1].price}).` : `₹${item.prices[0].price} per piece.`)}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function scrollToCategory(key){
+  document.querySelectorAll('.category-block').forEach(el => el.classList.toggle('open', el.id === 'cat-' + key));
+  const el = document.getElementById('cat-' + key);
+  if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function toggleRow(itemId){
+  const row = document.getElementById('row-' + itemId);
+  if(row) row.classList.toggle('expanded');
+}
+
+function handleItemClick(itemId){
+  if(!shopOpen){
+    openShopClosedModal();
+    return;
+  }
+  const item = ITEM_INDEX[itemId];
+  if(item.tobacco) openAgeGate(itemId);
+  else openOrderModal(itemId);
+}
+
+function openShopClosedModal(){
+  const shopPhone = settings.shopWhatsApp || '9180328338';
+  const waUrl = `https://api.whatsapp.com/send?phone=91${shopPhone}&text=Namaste%20Raje%20Paan%20Darbar!%20When%20will%20the%20counter%20open%20for%20orders%3F`;
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'closedModalOverlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <div style="font-size:40px; margin-bottom:8px;">🔴</div>
+      <h3 style="color:var(--maroon); font-size:22px; margin:0 0 6px;">Shop is Currently Closed</h3>
+      <p class="item-sub" style="margin:8px 0 18px; line-height:1.5;">Counter ordering is currently paused. You can still explore our fresh menu or message us on WhatsApp!</p>
+
+      <a href="${waUrl}" target="_blank" class="btn-whatsapp-large" onclick="closeShopClosedModal()" style="display:inline-flex; align-items:center; justify-content:center; gap:8px; background:var(--whatsapp); color:#fff; padding:12px; border-radius:999px; text-decoration:none; font-weight:700; width:100%;">
+        <span>💬 Inquire on WhatsApp</span>
+      </a>
+
+      <button class="btn-ghost" style="width:100%; margin-top:10px; background:transparent; border:1px solid var(--grey-pale); padding:10px; border-radius:999px; cursor:pointer;" onclick="closeShopClosedModal()">Browse Menu Only</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeShopClosedModal(); });
+}
+
+function closeShopClosedModal(){
+  const el = document.getElementById('closedModalOverlay');
+  if(el) el.remove();
+}
+
+function openAgeGate(itemId){
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay age-modal';
+  overlay.id = 'ageGateOverlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <h3>🔞 Age Confirmation</h3>
+      <p>This item contains tobacco. Sale is strictly restricted to customers aged 18 years or older.</p>
+      <div class="age-actions">
+        <button class="age-no" onclick="closeAgeGate()">Cancel</button>
+        <button class="age-yes" onclick="confirmAgeAndOrder('${itemId}')">I am 18+</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeAgeGate(); });
+}
+function closeAgeGate(){
+  const el = document.getElementById('ageGateOverlay');
+  if(el) el.remove();
+}
+function confirmAgeAndOrder(itemId){
+  closeAgeGate();
+  openOrderModal(itemId);
+}
+
+let modalQty = 1;
+let modalItem = null;
+let modalSizeIndex = 0;
+let modalStrength = 'Medium';
+
+function openOrderModal(itemId){
+  modalItem = ITEM_INDEX[itemId];
+  modalQty = 1;
+  modalSizeIndex = 0;
+  modalStrength = 'Medium';
+
+  const hasSizes = !modalItem.tobacco && modalItem.prices.length > 1;
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'orderModalOverlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <h3>${modalItem.name}</h3>
+      <p class="item-sub">${modalItem.categoryTitle}${modalItem.tobacco ? ' · Contains tobacco (18+)' : ''}</p>
+
+      ${hasSizes ? `
+        <label>Portion Size</label>
+        <div class="size-row" id="sizeRow">
+          ${modalItem.prices.map((p,i) => `
+            <span class="size-chip ${i===0 ? 'on' : ''}" data-i="${i}" onclick="selectSize(${i})">${p.label}<span class="sp">₹${p.price}</span></span>
+          `).join('')}
+        </div>
+      ` : ''}
+
+      ${modalItem.tobacco ? `
+        <label>Tobacco Strength</label>
+        <div class="size-row" id="strengthRow">
+          ${['Soft','Medium','Kadak'].map(s => `
+            <span class="size-chip ${s==='Medium' ? 'on' : ''}" data-s="${s}" onclick="selectStrength('${s}')">${s}</span>
+          `).join('')}
+        </div>
+      ` : ''}
+
+      <label>Your Name</label>
+      <input type="text" id="custName" placeholder="e.g. Rahul Sharma" maxlength="60">
+      <div class="field-error" id="errName"></div>
+
+      <label>Your Mobile Number (10 Digits)</label>
+      <input type="tel" id="custPhone" placeholder="e.g. 9876543210" maxlength="10" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10);">
+      <div class="field-error" id="errPhone"></div>
+
+      <label>Quantity</label>
+      <div class="qty-row">
+        <button type="button" onclick="changeQty(-1)">−</button>
+        <span id="qtyDisplay">1</span>
+        <button type="button" onclick="changeQty(1)">+</button>
+      </div>
+
+      <div class="modal-total">
+        <span>Order Total</span>
+        <b id="modalTotal">₹${modalItem.tobacco ? modalItem.prices[0].price : modalItem.prices[0].price}</b>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn-primary" id="submitOrderBtn" onclick="submitOrder()">Place Order &amp; Get Token</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeModal(); });
+}
+
+function selectSize(i){
+  modalSizeIndex = i;
+  document.querySelectorAll('#sizeRow .size-chip').forEach(el => el.classList.toggle('on', parseInt(el.dataset.i)===i));
+  updateTotal();
+}
+function selectStrength(s){
+  modalStrength = s;
+  document.querySelectorAll('#strengthRow .size-chip').forEach(el => el.classList.toggle('on', el.dataset.s===s));
+}
+function changeQty(delta){
+  modalQty = Math.max(1, Math.min(20, modalQty + delta));
+  document.getElementById('qtyDisplay').textContent = modalQty;
+  updateTotal();
+}
+function updateTotal(){
+  const price = modalItem.tobacco ? modalItem.prices[0].price : modalItem.prices[modalSizeIndex].price;
+  document.getElementById('modalTotal').textContent = '₹' + (price * modalQty);
+}
+function closeModal(){
+  const el = document.getElementById('orderModalOverlay');
+  if(el) el.remove();
+}
+
+async function submitOrder(){
+  const nameEl = document.getElementById('custName');
+  const phoneEl = document.getElementById('custPhone');
+  const name = nameEl.value.trim();
+  const phone = phoneEl.value.trim();
+  let ok = true;
+  document.getElementById('errName').textContent = '';
+  document.getElementById('errPhone').textContent = '';
+  if(name.length < 2){ document.getElementById('errName').textContent = 'Please enter your name.'; ok = false; }
+  if(!/^[0-9]{10}$/.test(phone)){ document.getElementById('errPhone').textContent = 'Enter a valid 10-digit mobile number.'; ok = false; }
+  if(!ok) return;
+
+  if(!shopOpen){ closeModal(); openShopClosedModal(); return; }
+  const btn = document.getElementById('submitOrderBtn');
+  if(btn.disabled) return;
+  const pushSub = await getPushSubscription();
+  btn.disabled = true; btn.textContent = 'Generating Token...';
+
+  const tokenNumber = getNextTokenNumber();
+  const chosen = modalItem.tobacco ? modalItem.prices[0] : modalItem.prices[modalSizeIndex];
+  const newOrder = {
+    id: 'TOKEN-' + tokenNumber + '-' + Math.random().toString(36).slice(2, 7),
+    tokenNumber: tokenNumber,
+    itemId: modalItem.id,
+    itemName: modalItem.name + (modalItem.tobacco ? ' (' + modalStrength + ')' : (chosen.label ? ' (' + chosen.label + ')' : '')),
+    categoryTitle: modalItem.categoryTitle,
+    price: chosen.price,
+    qty: modalQty,
+    customerName: name,
+    phone: phone,
+    status: 'pending',
+    createdAt: Date.now(),
+    readyAt: null,
+    pickedAt: null,
+    pushSub: pushSub || null
+  };
+
+  const saved = await pushOrder(newOrder);
+  if(!saved){
+    btn.disabled = false; btn.textContent = 'Place Order & Get Token';
+    document.getElementById('errName').textContent = 'Could not send your order (' + (window.lastCloudError || 'unknown') + '). Check internet and try again.';
+    return;
+  }
+
+  myTokenIds.add(newOrder.id);
+  saveMyTokens(myTokenIds);
+
+  closeModal();
+
+  // Open Order Success / WhatsApp Message to Shop Modal
+  openCustomerSuccessModal(newOrder);
+
+  renderCustomerTokens();
+}
+
+/* ----------------------------------------------------
+   AUTOMATIC CUSTOMER READY SOUND & ALERT
+---------------------------------------------------- */
+let notifiedReadyTokens = new Set();
+
+function playCustomerReadyChime(){
+  try{
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if(!AudioContext) return;
+    const ctx = new AudioContext();
+    const now = ctx.currentTime;
+    const tones = [523.25, 659.25, 783.99, 1046.50]; // Joyful C major chime
+    tones.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + (idx * 0.12));
+      gain.gain.setValueAtTime(0.35, now + (idx * 0.12));
+      gain.gain.exponentialRampToValueAtTime(0.001, now + (idx * 0.12) + 0.5);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + (idx * 0.12));
+      osc.stop(now + (idx * 0.12) + 0.5);
+    });
+    if('vibrate' in navigator) navigator.vibrate([250, 150, 250]);
+  }catch(e){}
+}
+
+function checkCustomerReadyNotifications(){
+  orders.forEach(o => {
+    if(myTokenIds.has(o.id) && o.status === 'ready' && !notifiedReadyTokens.has(o.id)){
+      notifiedReadyTokens.add(o.id);
+      playCustomerReadyChime();
+      sendReadyNotification(o);
+      openOrderReadyModal(o);
+      showToast('order', '🍃 Order Ready!', `Token #${o.tokenNumber} is ready for pickup!`);
+    }
+  });
+}
+
+/* Web Push: lets the shop notify the customer even when this page is closed */
+const VAPID_PUBLIC_KEY = 'BKEITp-CX1avOefNFPQeODWjI78lRrtm02m_-fwhdmSeQlKvwnoKvdF6_v3z-4SK6Mx28Y5zB66hj3IYNMpOSLo';
+function b64ToU8(b){
+  const s = (b + '='.repeat((4 - b.length % 4) % 4)).replace(/-/g,'+').replace(/_/g,'/');
+  return Uint8Array.from(atob(s), c => c.charCodeAt(0));
+}
+async function getPushSubscription(){
+  try{
+    if(!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return null;
+    let perm = Notification.permission;
+    if(perm === 'default') perm = await Notification.requestPermission();
+    if(perm !== 'granted') return null;
+    const reg = await Promise.race([navigator.serviceWorker.ready, new Promise(r => setTimeout(() => r(null), 4000))]);
+    if(!reg) return null;
+    let sub = await reg.pushManager.getSubscription();
+    if(!sub) sub = await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:b64ToU8(VAPID_PUBLIC_KEY)});
+    return sub.toJSON();
+  }catch(e){ console.warn('Push unavailable', e); return null; }
+}
+
+/* Keep the customer's screen on while an order is being prepared, and show a system notification when ready */
+let custWake = null;
+async function keepAwakeCustomer(){
+  try{
+    if('wakeLock' in navigator && !custWake){
+      custWake = await navigator.wakeLock.request('screen');
+      custWake.addEventListener('release', () => { custWake = null; });
+    }
+  }catch(e){}
+}
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible' && orders.some(o => myTokenIds.has(o.id) && o.status === 'pending')) keepAwakeCustomer();
+});
+function sendReadyNotification(o){
+  document.title = '🍃 READY! Token #' + o.tokenNumber;
+  try{
+    if('Notification' in window && Notification.permission === 'granted'){
+      new Notification('🍃 Your paan is ready!', { body: 'Token #' + o.tokenNumber + ' - collect it from the counter.' });
+    }
+  }catch(e){}
+}
+
+function openOrderReadyModal(order){
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'orderReadyModalOverlay';
+  overlay.innerHTML = `
+    <div class="modal" style="border-top:6px solid #25D366; animation:bounceIn 0.35s ease;">
+      <div style="font-size:48px; margin-bottom:4px;">🍃</div>
+      <h3 style="color:var(--leaf); font-size:24px; margin:4px 0;">YOUR ORDER IS READY!</h3>
+      <p style="font-size:13.5px; color:var(--ink-soft); margin:0 0 14px;">Your fresh paan has been prepared. Please collect it from the counter.</p>
+
+      <div class="success-token-box" style="background:#e8f7ee; border:2px solid #25D366; border-radius:12px; padding:16px;">
+        <div style="font-size:12px; font-weight:700; color:#1B4332; text-transform:uppercase; letter-spacing:1px;">Token Number</div>
+        <div class="token-number-huge" style="color:var(--leaf); font-size:42px; font-family:'Rozha One',serif; margin:4px 0;">#${order.tokenNumber}</div>
+        <div style="font-weight:700; font-size:15px; margin-top:4px;">${order.itemName} × ${order.qty}</div>
+        <div style="font-size:12.5px; color:var(--ink-soft); margin-top:2px;">Total: ₹${order.price * order.qty} · ${order.customerName}</div>
+      </div>
+
+      <button class="btn-primary" style="margin-top:16px; background:var(--leaf); width:100%;" onclick="closeOrderReadyModal()">✓ OK, Collecting Now</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+function closeOrderReadyModal(){
+  const el = document.getElementById('orderReadyModalOverlay');
+  if(el) el.remove();
+}
+
+/* ----------------------------------------------------
+   CUSTOMER ORDER SUCCESS MODAL (AUTOMATIC)
+---------------------------------------------------- */
+function openCustomerSuccessModal(order){
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay success-modal';
+  overlay.id = 'successModalOverlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="success-icon" style="font-size:44px; margin-bottom:4px;">🍃</div>
+      <h3 style="color:var(--leaf); font-size:22px; margin:4px 0 6px;">Order Sent to Kitchen!</h3>
+      <p class="item-sub" style="margin-bottom:14px;">Your order was sent directly to the kitchen counter.</p>
+
+      <div class="success-token-box">
+        <div style="font-size:12px; font-weight:700; color:var(--ink-soft); text-transform:uppercase;">Your Token Number</div>
+        <div class="token-number-huge">#${order.tokenNumber}</div>
+        <div style="font-weight:700; font-size:15px; margin-top:4px;">${order.itemName} × ${order.qty}</div>
+        <div style="font-size:12.5px; color:var(--ink-soft); margin-top:2px;">Total: ₹${order.price * order.qty} · ${order.customerName}</div>
+      </div>
+
+      <div style="background:var(--saffron-pale); border:1.5px solid var(--saffron); border-radius:10px; padding:12px; margin:14px 0; font-size:13px; color:#784f00; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px;">
+        <span class="live-dot" style="background:var(--saffron);"></span>
+        <span>Status: <b>⏳ Preparing your fresh Paan...</b></span>
+      </div>
+
+      <p style="font-size:12px; color:var(--ink-soft); margin:0 0 14px; line-height:1.4;">
+        This page will <b>automatically ring a chime 🔔</b> and alert you the second your paan is ready for pickup!
+      </p>
+
+      <button class="btn-primary" style="width:100%;" onclick="closeSuccessModal()">✓ Track Live Status</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeSuccessModal(); });
+}
+
+function closeSuccessModal(){
+  const el = document.getElementById('successModalOverlay');
+  if(el) el.remove();
+}
+
+/* ----------------------------------------------------
+   CUSTOMER TOKEN BAR
+---------------------------------------------------- */
+function elapsedLabel(fromTs){
+  if(!fromTs) return 'just now';
+  const mins = Math.floor((Date.now() - fromTs) / 60000);
+  if(mins < 1) return 'just now';
+  if(mins < 60) return mins + 'm ago';
+  const h = Math.floor(mins/60), m = mins%60;
+  return h + 'h ' + m + 'm ago';
+}
+
+function renderCustomerTokens(){
+  const bar = document.getElementById('custStatusBar');
+  const grid = document.getElementById('custTokensGrid');
+  const countEl = document.getElementById('custOrderCount');
+  
+  const myOrders = orders.filter(o => myTokenIds.has(o.id));
+  if(myOrders.length === 0){
+    bar.style.display = 'none';
+    return;
+  }
+  bar.style.display = 'block';
+  if(myOrders.some(o => o.status === 'pending')) keepAwakeCustomer();
+  countEl.textContent = `${myOrders.length} Order${myOrders.length>1?'s':''}`;
+
+  grid.innerHTML = myOrders.slice(-6).reverse().map(o => {
+    let statusBadge = '';
+    if(o.status === 'pending') statusBadge = '<span class="cust-token-status status-tag-pending">⏳ Preparing</span>';
+    else if(o.status === 'ready') statusBadge = '<span class="cust-token-status status-tag-ready">🍃 Ready to Pick!</span>';
+    else if(o.status === 'not_picked') statusBadge = '<span class="cust-token-status status-tag-not_picked">⚠️ Call Shop</span>';
+    else statusBadge = '<span class="cust-token-status status-tag-picked">✅ Picked Up</span>';
+
+    return `
+      <div class="cust-token-card ${o.status}">
+        <div class="cust-token-top">
+          <span class="token-badge-large">Token #${o.tokenNumber || o.id.replace('TOKEN-','')}</span>
+          ${statusBadge}
+        </div>
+        <div style="font-weight:700; font-size:14px; margin-top:2px;">${o.itemName} × ${o.qty}</div>
+        <div style="font-size:12px; color:var(--ink-soft); display:flex; justify-content:space-between; align-items:center;">
+          <span>₹${o.price * o.qty} (${o.customerName})</span>
+          <span class="mono">${elapsedLabel(o.createdAt)}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function showToast(type, title, message){
+  const stack = document.getElementById('toastStack');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.innerHTML = `<b>${title}</b>${message}`;
+  stack.appendChild(el);
+  setTimeout(()=>{ 
+    el.style.transition='opacity 0.4s, transform 0.4s'; 
+    el.style.opacity='0'; 
+    el.style.transform='translateX(40px)';
+    setTimeout(()=>el.remove(), 400); 
+  }, 5000);
+}
+
+async function poll(){
+  if(!firebaseDb){
+    orders = await loadOrders();
+    renderCustomerTokens();
+    checkCustomerReadyNotifications();
+  }
+  const storedOpen = localStorage.getItem(SHOP_OPEN_STORAGE_KEY) !== 'false';
+  if(storedOpen !== shopOpen){
+    shopOpen = storedOpen;
+    updateShopOpenUI();
+  }
+}
+
+window.addEventListener('storage', (event) => {
+  if(event.key === SHOP_OPEN_STORAGE_KEY){
+    shopOpen = event.newValue !== 'false';
+    updateShopOpenUI();
+  }
+  if(event.key === ORDER_STORAGE_KEY) poll();
+});
+if(orderChannel){
+  orderChannel.onmessage = (event) => {
+    if(event.data && event.data.type === 'shop-status-updated'){
+      shopOpen = event.data.isOpen !== false;
+      updateShopOpenUI();
+    } else {
+      poll();
+    }
+  };
+}
+
+function enterSite(){
+  const s = document.getElementById('splashScreen');
+  if(s){
+    s.classList.add('hidden');
+    document.body.classList.remove('locked');
+    setTimeout(()=>s.remove(), 600);
+  }
+}
+
+async function init(){
+  renderMenu();
+  updateShopOpenUI();
+  myTokenIds = loadMyTokens();
+  orders = await loadOrders();
+  settings = await loadSettings();
+  initFirebaseCloud();
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  renderCustomerTokens();
+  setInterval(poll, 1000);
+}
+
+init();
+</script>
+</body>
+</html>
